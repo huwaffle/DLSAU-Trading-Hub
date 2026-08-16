@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<!--
+  FILE MAP (index.html)
+  A  Login screen  : A1 login, A2 create account, A3 forgot password
+  B  Main app      : B1 top bar, B2 sidebar, B3 home, B4 messages, B5 wishlist, B6 mobile nav
+  C  Popups        : C1 sell item, C3 my profile (rating summary), C4 seller profile, C5 404, C6 developers, C7 edit listing
+  D  Notifications : toast area
+  Styles -> style.css (has its own table of contents)  |  Text/alerts -> script.js "MESSAGES"
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+    <title>DLSAU Trading Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="top-progress hidden" id="top-progress" role="progressbar" aria-label="Loading"><span id="top-progress-fill"></span></div>
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+    <!-- ========================================================== -->
+    <!-- SECTION A: LOGIN SCREEN (full-screen, shown before sign-in)
+         Edit button labels, field labels and placeholders below. -->
+    <!-- ========================================================== -->
+    <div class="auth-overlay" id="auth-overlay">
+        <div class="auth-shell">
+            <aside class="auth-art" aria-label="Welcome">
+                <h2>Trade, swap &amp; <em>share</em> with your campus family.</h2>
+                <p class="auth-art-sub">Join fellow DLSAU students buying, selling and trading the things they no longer need. It takes less than a minute to get started.</p>
+                <svg class="auth-illustration" viewBox="0 0 420 300" role="img" aria-label="Two students happily trading items at a campus stall">
+                    <ellipse cx="210" cy="272" rx="170" ry="16" fill="#0A7A4B" opacity="0.12"/>
+                    <circle cx="332" cy="70" r="42" fill="#FFB300"/>
+                    <circle cx="70" cy="64" r="18" fill="#C6F432"/>
+                    <rect x="36" y="150" width="34" height="34" rx="8" fill="#7DDBA8" transform="rotate(-12 53 167)"/>
+                    <!-- stall -->
+                    <rect x="120" y="120" width="180" height="140" rx="10" fill="#FFFFFF" stroke="#0F2418" stroke-width="3"/>
+                    <path d="M108 120 L132 70 H288 L312 120 Z" fill="#0A7A4B" stroke="#0F2418" stroke-width="3" stroke-linejoin="round"/>
+                    <path d="M132 70 L144 120 M176 70 L180 120 M220 70 V120 M264 70 L260 120 M288 70 L276 120" stroke="#C6F432" stroke-width="10" stroke-linecap="round" opacity="0.9"/>
+                    <rect x="120" y="188" width="180" height="14" fill="#C6F432" stroke="#0F2418" stroke-width="3"/>
+                    <!-- goods -->
+                    <rect x="140" y="146" width="40" height="42" rx="6" fill="#1D4ED8" stroke="#0F2418" stroke-width="3"/>
+                    <rect x="146" y="154" width="28" height="6" rx="3" fill="#FFFFFF" opacity="0.8"/>
+                    <path d="M200 188 V160 a22 22 0 0 1 44 0 V188 Z" fill="#BE185D" stroke="#0F2418" stroke-width="3"/>
+                    <rect x="256" y="150" width="30" height="38" rx="5" fill="#FFB300" stroke="#0F2418" stroke-width="3"/>
+                    <!-- student left -->
+                    <circle cx="82" cy="196" r="18" fill="#FFD9B3" stroke="#0F2418" stroke-width="3"/>
+                    <path d="M62 190 a20 20 0 0 1 40 -4 v-4 a20 20 0 0 0 -40 4 Z" fill="#0F2418"/>
+                    <path d="M56 262 v-40 a26 26 0 0 1 52 0 v40 Z" fill="#7DDBA8" stroke="#0F2418" stroke-width="3"/>
+                    <path d="M104 236 L130 214" stroke="#0F2418" stroke-width="10" stroke-linecap="round"/>
+                    <path d="M104 236 L130 214" stroke="#FFD9B3" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M74 200 q8 8 16 0" fill="none" stroke="#0F2418" stroke-width="3" stroke-linecap="round"/>
+                    <!-- student right -->
+                    <circle cx="338" cy="196" r="18" fill="#F2C18F" stroke="#0F2418" stroke-width="3"/>
+                    <path d="M320 192 a18 18 0 0 1 36 0 v-6 a18 18 0 0 0 -36 0 Z" fill="#6D28D9"/>
+                    <path d="M312 262 v-40 a26 26 0 0 1 52 0 v40 Z" fill="#FFB300" stroke="#0F2418" stroke-width="3"/>
+                    <path d="M316 236 L292 214" stroke="#0F2418" stroke-width="10" stroke-linecap="round"/>
+                    <path d="M316 236 L292 214" stroke="#F2C18F" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M330 200 q8 8 16 0" fill="none" stroke="#0F2418" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M356 130 l5 11 12 1 -9 8 3 12 -11 -6 -11 6 3 -12 -9 -8 12 -1 Z" fill="#C6F432" stroke="#0F2418" stroke-width="2.5" stroke-linejoin="round" transform="translate(-6 -30)"/>
+                </svg>
+                <ul class="auth-art-points">
+                    <li><i data-lucide="shield-check" aria-hidden="true"></i> Every listing is reviewed by an admin</li>
+                    <li><i data-lucide="message-square" aria-hidden="true"></i> Chat directly with sellers on campus</li>
+                    <li><i data-lucide="star" aria-hidden="true"></i> Trade with rated, verified students</li>
+                </ul>
+            </aside>
+
+        <div class="glass-card auth-card" data-view="login">
+            <div class="logo center">
+                <i data-lucide="leaf"></i>
+                <span>DLSAU Trading Hub</span>
+            </div>
+            
+            <div class="auth-tabs" id="auth-tabs-container">
+                <button class="tab-btn active" onclick="switchAuthTab('login')">Login</button>
+                <button class="tab-btn" onclick="switchAuthTab('register')">Create Account</button>
+            </div>
+
