@@ -80,4 +80,20 @@
                 <button class="tab-btn active" onclick="switchAuthTab('login')">Login</button>
                 <button class="tab-btn" onclick="switchAuthTab('register')">Create Account</button>
             </div>
+
+            <!-- A1. LOGIN FORM -->
+            <form novalidate id="login-form" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label for="login-email">Username or email</label>
+                    <input type="text" id="login-email" placeholder="Enter your username or email" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
+                </div>
+                <div class="form-aside">
+                    <a href="#" onclick="switchAuthTab('forgot')" class="text-link">Forgot Password?</a>
+                </div>
+                <button type="submit" class="glass-btn primary-btn full-width">Sign In</button>
+            </form>
 
