@@ -115,4 +115,46 @@
                 </div>
                 <button type="submit" class="glass-btn primary-btn full-width">Create Account</button>
             </form>
-
+
+            <!-- A3. FORGOT PASSWORD FORM -->
+            <form novalidate id="forgot-form" class="hidden" onsubmit="handleForgotPassword(event)">
+                <div class="auth-heading">
+                    <h3>Reset your password</h3>
+                    <p>Enter your username or email, the recovery code you received when you created your account, and choose a new password.</p>
+                </div>
+                <div class="input-group">
+                    <label for="forgot-email">Username or email</label>
+                    <input type="text" id="forgot-email" placeholder="Enter your username or email" autocapitalize="none" spellcheck="false" required>
+                </div>
+                <div class="input-group">
+                    <label for="forgot-code">Recovery code</label>
+                    <input type="text" id="forgot-code" placeholder="XXXXX-XXXXX" autocapitalize="characters" autocomplete="off" spellcheck="false" required>
+                </div>
+                <div class="input-group">
+                    <label for="forgot-password">New password (min. 6 chars)</label>
+                    <input type="password" id="forgot-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" minlength="6" autocomplete="new-password" required>
+                </div>
+                <div class="input-group">
+                    <label for="forgot-confirm">Confirm new password</label>
+                    <input type="password" id="forgot-confirm" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="new-password" required>
+                </div>
+                <button type="submit" class="glass-btn primary-btn full-width">Change password</button>
+                <div class="form-aside center-text">
+                    <a href="#" onclick="switchAuthTab('login')" class="text-link">Back to Login</a>
+                </div>
+            </form>
+
+            <!-- Legal footer (login and create account only) -->
+            <footer class="auth-footer">
+                <nav aria-label="Legal">
+                    <a href="#" class="text-link" onclick="openLegal('terms'); return false;">Terms of Service</a>
+                    <span aria-hidden="true">&middot;</span>
+                    <a href="#" class="text-link" onclick="openLegal('privacy'); return false;">Privacy Policy</a>
+                </nav>
+                <p>&copy; <span id="auth-year">2026</span> DLSAU Trading Hub. For De La Salle Araneta University students.</p>
+            </footer>
+        </div>
+        </div>
+    </div>
+
+    <!-- ========================================================== -->
