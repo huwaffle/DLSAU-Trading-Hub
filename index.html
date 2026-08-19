@@ -202,4 +202,37 @@
 
         <!-- MAIN CONTENT AREA -->
         <div class="app-body">
+            <!-- ========================================================== -->
+            <!-- B2. SIDEBAR - navigation links and category list
+                 Category names must match the data-category values used in script.js. -->
+            <!-- ========================================================== -->
+            <aside class="sidebar">
+                <div class="glass-card sidebar-card">
+                    <div class="sidebar-title">Navigation</div>
+                    <ul class="nav-menu">
+                        <li class="nav-item active" id="nav-home" onclick="switchMainTab('home')">
+                            <i data-lucide="home"></i> Home
+                        </li>
+                        <li class="nav-item" id="nav-chat" onclick="switchMainTab('chat')">
+                            <i data-lucide="message-square"></i> Messages
+                            <span class="badge hidden" id="unread-badge" role="status">0</span>
+                        </li>
+                        <li class="nav-item" id="nav-wishlist" onclick="switchMainTab('wishlist')">
+                            <i data-lucide="heart"></i> Wishlist
+                            <span class="badge badge-wish hidden" id="wishlist-badge" role="status">0</span>
+                        </li>
+                    </ul>
+
+                    <div class="sidebar-title" style="margin-top: 20px;">Categories</div>
+                    <ul class="category-list" id="category-filter-list">
+                        <li class="category-item active" data-category="All"><i data-lucide="grid"></i> All Items</li>
+                        <li class="category-item" data-category="School Supplies"><i data-lucide="pencil-ruler"></i> School Supplies</li>
+                        <li class="category-item" data-category="Electronics"><i data-lucide="cpu"></i> Electronics</li>
+                        <li class="category-item" data-category="Clothing &amp; Accessories"><i data-lucide="shirt"></i> Clothing &amp; Accessories</li>
+                        <li class="category-item" data-category="Sports &amp; Hobbies"><i data-lucide="dumbbell"></i> Sports &amp; Hobbies</li>
+                        <li class="category-item" data-category="Other"><i data-lucide="ellipsis"></i> Other</li>
+                    </ul>
+                </div>
+            </aside>
+
             <!-- ========================================================== -->
