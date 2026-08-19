@@ -162,4 +162,44 @@
          Plain text inside tags (labels, headings, buttons) can be edited directly. -->
     <!-- ========================================================== -->
     <div class="app-layout hidden" id="app-layout">
-        
+        
+        <!-- B1. TOP BAR - logo, search box, Sell Item button, profile -->
+        <header class="glass-nav app-header">
+            <div class="header-content">
+                <button type="button" class="logo logo-btn" onclick="openModal('team-modal')" aria-haspopup="dialog" title="Meet the developers">
+                    <i data-lucide="leaf" aria-hidden="true"></i>
+                    <span>DLSAU Trading Hub</span>
+                    <span class="sr-only">- meet the developers</span>
+                </button>
+
+                <div class="search-box glass-input">
+                    <i data-lucide="search"></i>
+                    <input type="text" id="search-input" placeholder="Search products, sellers..." />
+                </div>
+
+                <div class="header-actions">
+                    <button class="glass-btn action-btn" id="admin-badge-btn" style="display: none;" onclick="switchMainTab('admin')">
+                        <i data-lucide="shield-check"></i> <span class="hide-mobile">Admin Panel</span>
+                        <span class="badge hidden" id="admin-pending-badge" role="status">0</span>
+                    </button>
+                    <button type="button" class="glass-btn notif-btn" id="notif-btn" onclick="openNotifications()" aria-haspopup="dialog" aria-label="Notifications" title="Notifications">
+                        <i data-lucide="bell" aria-hidden="true"></i>
+                        <span class="badge hidden" id="notif-badge" role="status">0</span>
+                    </button>
+                    <button class="glass-btn primary-btn" id="sell-header-btn" onclick="openModal('upload-modal')">
+                        <i data-lucide="plus-circle"></i> <span class="hide-mobile">Sell Item</span>
+                    </button>
+                    <div class="user-profile" onclick="openModal('profile-modal')">
+                        <div class="avatar" id="user-avatar">JG</div>
+                        <div class="user-info hide-mobile">
+                            <h4 id="user-display-name">Justine Garma</h4>
+                            <p id="user-role-label">Member</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT AREA -->
+        <div class="app-body">
+            <!-- ========================================================== -->
