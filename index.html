@@ -266,4 +266,82 @@
                     <!-- Dynamic rendering -->
                 </div>
             </main>
+
+            <!-- B4. MESSAGES TAB - conversations and chat -->
+            <main class="app-content hidden" id="tab-chat-view">
+                <div class="glass-card chat-container">
+                    <!-- Chat Conversations Sidebar -->
+                    <div class="chat-sidebar">
+                        <div class="chat-sidebar-header">
+                            <h4>Conversations</h4>
+                        </div>
+                        <div class="chat-threads-list" id="chat-threads-list">
+                            <!-- Dynamic threads -->
+                        </div>
+                    </div>
+
+                    <!-- Main Chat Panel -->
+                    <div class="chat-main" id="chat-main">
+                        <div class="chat-empty-view" id="chat-empty-view">
+                            <i data-lucide="message-square"></i>
+                            <h4>Your Messages</h4>
+                            <p>Select a conversation or click "Chat" on any listed product to start chatting with the seller.</p>
+                        </div>
+
+                        <div class="chat-active-view hidden" id="chat-active-view">
+                            <div class="chat-header">
+                                <div class="chat-user-details" style="cursor: pointer;" onclick="openSellerProfileFromChat()">
+                                    <div class="avatar" id="chat-recipient-avatar">--</div>
+                                    <div>
+                                        <h4 id="chat-recipient-name">Seller Name</h4>
+                                        <p id="chat-item-context" class="text-muted">Item Context</p>
+                                    </div>
+                                </div>
+                                <div class="chat-header-actions">
+                                    <button type="button" class="glass-btn rate-btn" id="chat-rate-btn" onclick="toggleChatRate()" aria-haspopup="dialog" aria-expanded="false" aria-controls="chat-rate-panel" title="Rate this user">
+                                        <i data-lucide="star" aria-hidden="true"></i> <span id="chat-rate-label">Rate</span>
+                                    </button>
+                                    <button type="button" class="icon-btn chat-back-btn" onclick="closeChatPanel()" aria-label="Back to conversations" title="Back"><i data-lucide="arrow-left" aria-hidden="true"></i></button>
+                                    <button type="button" class="icon-btn danger-hover" id="chat-report-btn" onclick="openReportModal()" aria-label="Report this user" title="Report this user">
+                                        <i data-lucide="flag" aria-hidden="true"></i>
+                                    </button>
+                                    <button type="button" class="icon-btn danger-hover" id="chat-delete-btn" onclick="deleteConversation()" aria-label="Delete conversation" title="Delete conversation">
+                                        <i data-lucide="trash-2" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Quick rating popover: opens from the Rate button in the chat header -->
+                                <div class="rate-popover hidden" id="chat-rate-panel" role="dialog" aria-labelledby="chat-rate-title">
+                                    <div class="rate-pop-head">
+                                        <strong id="chat-rate-title">Rate this user</strong>
+                                        <button type="button" class="rate-pop-close" aria-label="Close rating" onclick="toggleChatRate(false)">&times;</button>
+                                    </div>
+                                    <p class="rate-pop-sub" id="chat-rate-sub"></p>
+                                    <div class="star-input" id="chat-star-input" role="radiogroup" aria-label="Your rating"></div>
+                                    <p class="rate-pop-error hidden" id="chat-rate-error" role="alert">Choose a star rating from 1 to 5.</p>
+                                    <label class="sr-only" for="chat-rate-comment">Comment (optional)</label>
+                                    <input type="text" id="chat-rate-comment" maxlength="200" placeholder="Add a comment (optional)" autocomplete="off">
+                                    <div class="rate-pop-actions">
+                                        <button type="button" class="glass-btn primary-btn" id="chat-rate-submit" onclick="submitChatRating()">Submit rating</button>
+                                        <button type="button" class="text-link rate-pop-link" onclick="viewChatPartnerProfile()">See profile &amp; reviews</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="chat-messages-area" id="chat-messages-area">
+                                <!-- Messages rendered dynamically -->
+                            </div>
+
+                            <div id="chat-alert-slot" class="chat-alert-slot"></div>
+
+                            <form class="chat-input-area" novalidate onsubmit="handleSendChatMessage(event)">
+                                <input type="text" id="chat-input-field" placeholder="Type a message..." autocomplete="off" required />
+                                <button type="submit" class="glass-btn primary-btn" aria-label="Send message">
+                                    <i data-lucide="send"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </main>
 
