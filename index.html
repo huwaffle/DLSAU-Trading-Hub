@@ -235,4 +235,35 @@
                 </div>
             </aside>
 
-            <!-- ========================================================== -->
+            <!-- ========================================================== -->
+            <!-- B3. HOME TAB - hero banner + product listings
+                 Edit the hero headline and subtitle here. -->
+            <!-- ========================================================== -->
+            <main class="app-content" id="tab-home-view">
+                <section class="hero" aria-label="Welcome">
+                    <div class="hero-text">
+                        <p class="eyebrow">DLSAU Trading Hub</p>
+                        <h2>Trade, swap &amp; <em>share</em> across campus.</h2>
+                        <p class="hero-sub">Post what you no longer need, find what you are looking for, and chat directly with fellow students to arrange a trade.</p>
+                        <button class="glass-btn primary-btn" onclick="openModal('upload-modal')">
+                            <i data-lucide="repeat-2" aria-hidden="true"></i> Post an item to trade
+                        </button>
+                    </div>
+                    <svg class="hero-art" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+                        <rect x="10" y="10" width="90" height="90" rx="16" fill="#C6F432"/>
+                        <circle cx="150" cy="55" r="45" fill="#FFB300"/>
+                        <path d="M10 190 L55 110 L100 190 Z" fill="#FFFFFF"/>
+                        <rect x="110" y="110" width="80" height="80" rx="40" fill="#7DDBA8"/>
+                        <circle cx="55" cy="55" r="14" fill="#0A7A4B"/>
+                    </svg>
+                </section>
+                <div class="section-header">
+                    <h3 id="current-category-title">Market Listings</h3>
+                    <span class="item-count" id="item-count">0 Products Available</span>
+                </div>
+
+                <div class="cards-grid" id="product-grid">
+                    <!-- Dynamic rendering -->
+                </div>
+            </main>
+
