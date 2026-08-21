@@ -344,4 +344,19 @@
                     </div>
                 </div>
             </main>
+
+            <!-- B7. ADMIN DASHBOARD (admin only) -->
+            <main class="app-content hidden" id="tab-admin-view">
+                <div class="section-header">
+                    <h3>Admin Dashboard</h3>
+                </div>
+                <div class="admin-stats" id="admin-stats"></div>
+                <div class="admin-tabs" role="tablist" id="admin-tabs">
+                    <button type="button" class="admin-tab active" data-admin-tab="pending" onclick="setAdminTab('pending')">Pending review <span class="badge hidden" id="admin-tab-pending">0</span></button>
+                    <button type="button" class="admin-tab" data-admin-tab="listings" onclick="setAdminTab('listings')">All listings</button>
+                    <button type="button" class="admin-tab" data-admin-tab="accounts" onclick="setAdminTab('accounts')">Accounts</button>
+                    <button type="button" class="admin-tab" data-admin-tab="reports" onclick="setAdminTab('reports')">Reports <span class="badge hidden" id="admin-tab-reports">0</span></button>
+                </div>
+                <div class="glass-card admin-panel" id="admin-panel"></div>
+            </main>
 
