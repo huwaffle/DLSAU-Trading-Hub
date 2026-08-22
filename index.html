@@ -372,4 +372,36 @@
                 </div>
             </main>
         </div>
-
+
+        <!-- B6. MOBILE BOTTOM NAV (phones only) -->
+        <nav class="glass-nav bottom-nav">
+            <button class="mobile-nav-item active" id="mob-nav-home" onclick="switchMainTab('home')">
+                <i data-lucide="home"></i>
+                <span>Home</span>
+            </button>
+            <button class="mobile-nav-item" id="mob-nav-chat" onclick="switchMainTab('chat')">
+                <i data-lucide="message-square"></i>
+                <span>Chat</span>
+                <span class="badge hidden" id="mob-unread-badge" role="status">0</span>
+            </button>
+            <button class="mobile-nav-item" id="mob-nav-wishlist" onclick="switchMainTab('wishlist')">
+                <i data-lucide="heart"></i>
+                <span>Wishlist</span>
+                <span class="badge badge-wish hidden" id="mob-wishlist-badge" role="status">0</span>
+            </button>
+            <button class="mobile-nav-item hidden" id="mob-nav-admin" onclick="switchMainTab('admin')">
+                <i data-lucide="shield-check"></i>
+                <span>Admin</span>
+            </button>
+            <button class="mobile-nav-item" onclick="openModal('upload-modal')">
+                <i data-lucide="plus-circle"></i>
+                <span>Sell</span>
+            </button>
+            <button class="mobile-nav-item" onclick="openModal('profile-modal')">
+                <i data-lucide="user"></i>
+                <span>Profile</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- ========================================================== -->
