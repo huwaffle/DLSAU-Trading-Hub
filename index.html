@@ -404,4 +404,89 @@
         </nav>
     </div>
 
+    <!-- ========================================================== -->
+    <!-- SECTION C1: POPUP - Post Item for Sale
+         Plain text inside tags (labels, headings, buttons) can be edited directly. -->
+    <!-- ========================================================== -->
+    <div class="modal-overlay hidden" id="upload-modal">
+        <div class="glass-card modal-card wizard-card">
+            <div class="modal-header">
+                <h3>Post an Item to Trade</h3>
+                <button class="close-btn" aria-label="Close dialog" onclick="closeModal('upload-modal')">&times;</button>
+            </div>
+
+            <!-- Progress: filled in by script.js (section 9, UPLOAD_STEPS) -->
+            <ol class="stepper" id="upload-stepper" aria-label="Listing progress"></ol>
+            <div class="progress-track" id="upload-progress" role="progressbar" aria-label="Listing progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25">
+                <span id="upload-progress-fill"></span>
+            </div>
+            <p class="step-count" id="upload-step-count" aria-live="polite"></p>
+
+            <form novalidate id="upload-form" onsubmit="handleUploadProduct(event)">
+                <!-- STEP 1: BASICS -->
+                <section class="wizard-step" data-step="0" aria-labelledby="step-title-0">
+                    <h4 id="step-title-0">What are you trading?</h4>
+                    <p class="step-hint">Give your item a name and choose where it belongs.</p>
+                    <div class="input-group">
+                        <label for="prod-name">Item name <span class="required-mark" aria-hidden="true">*</span></label>
+                        <input type="text" id="prod-name" placeholder="e.g. Wireless Headphones" maxlength="80" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="prod-category">Category <span class="required-mark" aria-hidden="true">*</span></label>
+                        <select id="prod-category" class="glass-input select-field" required>
+                            <option value="" disabled selected>Select a category</option>
+                            <option value="School Supplies">School Supplies</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Clothing &amp; Accessories">Clothing &amp; Accessories</option>
+                            <option value="Sports &amp; Hobbies">Sports &amp; Hobbies</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- STEP 2: PHOTO -->
+                <section class="wizard-step hidden" data-step="1" aria-labelledby="step-title-1">
+                    <h4 id="step-title-1">Add a photo</h4>
+                    <p class="step-hint">A clear photo helps other students find your item.</p>
+                    <div class="input-group">
+                        <label for="prod-file">Photo <span class="required-mark" aria-hidden="true">*</span></label>
+                        <input type="file" id="prod-file" accept="image/*" required>
+                        <p class="input-hint">JPG or PNG. It is resized automatically and shown on your listing card.</p>
+                    </div>
+                    <div class="upload-preview hidden" id="upload-preview">
+                        <img id="upload-preview-img" alt="Preview of the selected photo">
+                        <div class="upload-preview-info">
+                            <strong id="upload-file-name"></strong>
+                            <span id="upload-file-size"></span>
+                        </div>
+                        <button type="button" class="glass-btn" onclick="clearUploadFile()">Remove</button>
+                    </div>
+                </section>
+
+                <!-- STEP 3: DETAILS -->
+                <section class="wizard-step hidden" data-step="2" aria-labelledby="step-title-2">
+                    <h4 id="step-title-2">Describe it</h4>
+                    <p class="step-hint">Mention the condition, size or anything a buyer should know.</p>
+                    <div class="input-group">
+                        <label for="prod-desc">Description <span class="required-mark" aria-hidden="true">*</span></label>
+                        <textarea id="prod-desc" rows="4" maxlength="400" placeholder="Describe your item..." required></textarea>
+                        <p class="input-hint"><span id="prod-desc-count">0</span>/400</p>
+                    </div>
+                </section>
+
+                <!-- STEP 4: REVIEW -->
+                <section class="wizard-step hidden" data-step="3" aria-labelledby="step-title-3">
+                    <h4 id="step-title-3">Review and publish</h4>
+                    <p class="step-hint">Check everything looks right. Use Back to change anything.</p>
+                    <div class="review-card" id="upload-review"></div>
+                </section>
+
+                <div class="wizard-actions">
+                    <button type="button" class="glass-btn hidden" id="upload-back-btn" onclick="prevUploadStep()">Back</button>
+                    <button type="submit" class="glass-btn primary-btn" id="upload-next-btn">Next</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ========================================================== -->
