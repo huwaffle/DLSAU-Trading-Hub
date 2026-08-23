@@ -489,4 +489,31 @@
         </div>
     </div>
 
+    <!-- ========================================================== -->
+    <!-- SECTION C3: POPUP - My Account Profile
+         Plain text inside tags (labels, headings, buttons) can be edited directly. -->
+    <!-- ========================================================== -->
+    <div class="modal-overlay hidden" id="profile-modal">
+        <div class="glass-card modal-card">
+            <div class="modal-header">
+                <h3>My Account Profile</h3>
+                <button class="close-btn" aria-label="Close dialog" onclick="closeModal('profile-modal')">&times;</button>
+            </div>
+            <div class="profile-detail center">
+                <div class="avatar large" id="prof-avatar">JG</div>
+                <h3 id="prof-name">Justine Garma</h3>
+                <p id="prof-email" class="text-muted">user</p>
+                
+                <div class="rating-box" id="my-rating-box">
+                    <h4>Your Campus Rating</h4>
+                    <div class="rating-summary" id="my-rating-summary"></div>
+                    <p class="text-muted rating-note">You cannot rate yourself. Other students rate you.</p>
+                    <ul class="review-list" id="my-reviews" aria-label="Reviews about you"></ul>
+                </div>
+
+                <button class="glass-btn danger-btn full-width" onclick="handleLogout()" style="margin-top: 15px;">Sign Out</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ========================================================== -->
