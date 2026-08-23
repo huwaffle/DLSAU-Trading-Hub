@@ -516,4 +516,45 @@
         </div>
     </div>
 
+    <!-- ========================================================== -->
+    <!-- SECTION C4: POPUP - Seller Profile and rating
+         Plain text inside tags (labels, headings, buttons) can be edited directly. -->
+    <!-- ========================================================== -->
+    <div class="modal-overlay hidden" id="seller-profile-modal">
+        <div class="glass-card modal-card">
+            <div class="modal-header">
+                <h3>Seller Profile</h3>
+                <button class="close-btn" aria-label="Close dialog" onclick="closeModal('seller-profile-modal')">&times;</button>
+            </div>
+            <div class="profile-detail center">
+                <div class="avatar large" id="seller-prof-avatar">--</div>
+                <h3 id="seller-prof-name">Seller Name</h3>
+                <p id="seller-prof-role" class="text-muted">DLSAU Member</p>
+                
+                <div class="rating-box">
+                    <h4>Seller Rating</h4>
+                    <div class="rating-summary" id="seller-rating-summary"></div>
+
+                    <form novalidate class="rate-form" id="rate-form" onsubmit="handleSubmitRating(event)">
+                        <div class="input-group">
+                            <label id="star-input-label">Your rating</label>
+                            <div class="star-input" id="star-input" role="radiogroup" aria-labelledby="star-input-label"></div>
+                        </div>
+                        <div class="input-group">
+                            <label for="rate-comment">Review <span class="optional">(optional)</span></label>
+                            <textarea id="rate-comment" rows="2" maxlength="200" placeholder="How was your experience with this user?"></textarea>
+                            <p class="input-hint"><span id="rate-comment-count">0</span>/200</p>
+                        </div>
+                        <div class="rate-actions">
+                            <button type="submit" class="glass-btn primary-btn" id="rate-submit-btn">Submit rating</button>
+                            <button type="button" class="glass-btn hidden" id="rate-remove-btn" onclick="removeMyRating()">Remove my rating</button>
+                        </div>
+                    </form>
+
+                    <ul class="review-list" id="seller-reviews" aria-label="Reviews about this user"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ========================================================== -->
