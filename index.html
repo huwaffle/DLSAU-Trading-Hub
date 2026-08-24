@@ -557,4 +557,28 @@
         </div>
     </div>
 
+    <!-- ========================================================== -->
+    <!-- SECTION C6: POPUP - Meet the developers (opens from the leaf logo in the top bar)
+         Names are listed in script.js -> TEAM (sorted A-Z by first name automatically). -->
+    <!-- ========================================================== -->
+    <div class="modal-overlay hidden" id="team-modal">
+        <div class="glass-card modal-card team-card">
+            <div class="modal-header">
+                <button class="close-btn" aria-label="Close dialog" onclick="closeModal('team-modal')">&times;</button>
+            </div>
+            <section class="about-section" aria-labelledby="about-title">
+                <h4 id="about-title">About DLSAU Marketplace</h4>
+                <p>DLSAU Marketplace is a student-to-student trading hub for De La Salle Araneta University. Students can post items they no longer need, browse what others are offering, and chat directly with sellers to arrange a trade on campus.</p>
+                <ul class="about-points">
+                    <li><i data-lucide="shield-check" aria-hidden="true"></i> Every listing is reviewed by an admin before it appears on the marketplace.</li>
+                    <li><i data-lucide="message-square" aria-hidden="true"></i> Chat with sellers, share the item you are interested in, and see when your messages are read.</li>
+                    <li><i data-lucide="star" aria-hidden="true"></i> Rate the people you trade with and report anyone who breaks the rules.</li>
+                </ul>
+            </section>
+            <h4 class="about-subtitle">The developers</h4>
+            <ol class="team-list" id="team-list"></ol>
+            <p class="team-foot"><i data-lucide="leaf" aria-hidden="true"></i> DLSAU Trading Hub</p>
+        </div>
+    </div>
+
     <!-- ========================================================== -->
