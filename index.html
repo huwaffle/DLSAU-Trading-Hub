@@ -581,4 +581,192 @@
         </div>
     </div>
 
+    <!-- ========================================================== -->
+    <!-- SECTION C7: POPUP - Edit Listing (opens from the pencil button on your own cards)
+         Only the seller who posted the listing can open it. -->
+    <!-- ========================================================== -->
+    <div class="modal-overlay hidden" id="edit-modal">
+        <div class="glass-card modal-card">
+            <div class="modal-header">
+                <h3>Edit Listing</h3>
+                <button class="close-btn" aria-label="Close dialog" onclick="closeModal('edit-modal')">&times;</button>
+            </div>
+            <form novalidate id="edit-form" onsubmit="handleEditProduct(event)">
+                <div class="input-group">
+                    <label for="edit-name">Item name <span class="required-mark" aria-hidden="true">*</span></label>
+                    <input type="text" id="edit-name" maxlength="80" required>
+                </div>
+                <div class="input-group">
+                    <label for="edit-category">Category <span class="required-mark" aria-hidden="true">*</span></label>
+                    <select id="edit-category" class="glass-input select-field" required>
+                        <option value="School Supplies">School Supplies</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Clothing &amp; Accessories">Clothing &amp; Accessories</option>
+                        <option value="Sports &amp; Hobbies">Sports &amp; Hobbies</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="edit-desc">Description <span class="required-mark" aria-hidden="true">*</span></label>
+                    <textarea id="edit-desc" rows="4" maxlength="400" required></textarea>
+                    <p class="input-hint"><span id="edit-desc-count">0</span>/400</p>
+                </div>
+                <div class="input-group">
+                    <label for="edit-file">Photo</label>
+                    <div class="upload-preview" id="edit-preview">
+                        <img id="edit-preview-img" alt="Current photo of the listing">
+                        <div class="upload-preview-info">
+                            <strong id="edit-photo-title">Current photo</strong>
+                            <span id="edit-photo-note">Choose a file below to replace it.</span>
+                        </div>
+                    </div>
+                    <input type="file" id="edit-file" accept="image/*" style="margin-top: 10px;">
+                    <p class="input-hint">Optional. Leave empty to keep the current photo.</p>
+                </div>
+                <div class="wizard-actions">
+                    <button type="button" class="glass-btn" onclick="closeModal('edit-modal')">Cancel</button>
+                    <button type="submit" class="glass-btn primary-btn" id="edit-save-btn">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- POPUP - Terms of Service and Privacy Policy (footer links + create-account agreement) -->
+    <div class="modal-overlay above-auth hidden" id="legal-modal">
+        <div class="glass-card modal-card legal-card">
+            <div class="modal-header">
+                <h3 id="legal-heading">Terms &amp; Privacy</h3>
+                <button class="close-btn" aria-label="Close dialog" onclick="closeLegal()">&times;</button>
+            </div>
+            <div class="legal-tabs" role="tablist">
+                <button type="button" class="legal-tab active" data-legal="terms" onclick="showLegalTab('terms')">Terms of Service</button>
+                <button type="button" class="legal-tab" data-legal="privacy" onclick="showLegalTab('privacy')">Privacy Policy</button>
+            </div>
+            <div class="legal-body" id="legal-body" tabindex="0"></div>
+            <div class="legal-consent hidden" id="legal-consent">
+                <label class="check-row" for="legal-agree">
+                    <input type="checkbox" id="legal-agree" onchange="document.getElementById('legal-accept-btn').disabled = !this.checked">
+                    <span class="check-box" aria-hidden="true"></span>
+                    <span>I have read and agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong>, and I allow DLSAU Trading Hub to process my information as described.</span>
+                </label>
+                <div class="wizard-actions">
+                    <button type="button" class="glass-btn" onclick="closeLegal()">Cancel</button>
+                    <button type="button" class="glass-btn primary-btn" id="legal-accept-btn" onclick="acceptLegalAndRegister()" disabled>Agree &amp; create account</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP - Recovery code (shown once after creating an account) -->
+    <div class="modal-overlay above-auth hidden" id="recovery-modal">
+        <div class="glass-card modal-card">
+            <div class="modal-header"><h3>Save your recovery code</h3></div>
+            <p class="step-hint">Your account was created. If you ever forget your password, this code is the only way to reset it yourself. We show it once, so write it down or copy it somewhere safe.</p>
+            <div class="recovery-box">
+                <code id="recovery-code"></code>
+                <button type="button" class="glass-btn" onclick="copyRecoveryCode()"><i data-lucide="copy" aria-hidden="true"></i> Copy</button>
+            </div>
+            <div class="wizard-actions">
+                <button type="button" class="glass-btn primary-btn" onclick="continueAfterRecovery()">I saved it - continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP - Report a user (opens from the flag button in the chat header) -->
+    <div class="modal-overlay hidden" id="report-modal">
+        <div class="glass-card modal-card">
+            <div class="modal-header">
+                <h3>Report user</h3>
+                <button class="close-btn" aria-label="Close dialog" onclick="closeModal('report-modal')">&times;</button>
+            </div>
+            <form novalidate id="report-form" onsubmit="handleSubmitReport(event)">
+                <p class="step-hint" id="report-target-text"></p>
+                <div class="input-group">
+                    <label for="report-reason">Reason <span class="required-mark" aria-hidden="true">*</span></label>
+                    <select id="report-reason" class="glass-input select-field" required>
+                        <option value="" disabled selected>Select a reason</option>
+                        <option>Scam or fraud</option>
+                        <option>Harassment or abusive language</option>
+                        <option>Spam</option>
+                        <option>Fake or misleading listing</option>
+                        <option>Prohibited item</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="report-details">Details <span class="optional">(optional)</span></label>
+                    <textarea id="report-details" rows="3" maxlength="400" placeholder="Tell the admin what happened..."></textarea>
+                </div>
+                <p class="input-hint">The recent messages of this conversation are sent to the admin with your report.</p>
+                <div class="wizard-actions">
+                    <button type="button" class="glass-btn" onclick="closeModal('report-modal')">Cancel</button>
+                    <button type="submit" class="glass-btn danger-btn" id="report-submit-btn">Send report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- POPUP - Notifications (bell in the top bar) -->
+    <div class="modal-overlay hidden" id="notif-modal">
+        <div class="glass-card modal-card">
+            <div class="modal-header">
+                <h3>Notifications</h3>
+                <button type="button" class="glass-btn notif-clear" id="notif-clear-btn" onclick="clearNotifications()">Clear all</button>
+                <button class="close-btn" aria-label="Close dialog" onclick="closeModal('notif-modal')">&times;</button>
+            </div>
+            <ul class="notif-list" id="notif-list"></ul>
+        </div>
+    </div>
+
+    <!-- POPUP - Reject listing (admin) -->
+    <div class="modal-overlay hidden" id="reject-modal">
+        <div class="glass-card modal-card">
+            <div class="modal-header">
+                <h3>Reject listing</h3>
+                <button class="close-btn" aria-label="Close dialog" onclick="closeModal('reject-modal')">&times;</button>
+            </div>
+            <form novalidate id="reject-form" onsubmit="handleRejectListing(event)">
+                <p class="step-hint" id="reject-target-text"></p>
+                <div class="input-group">
+                    <label for="reject-reason">Reason <span class="optional">(shown to the seller)</span></label>
+                    <textarea id="reject-reason" rows="3" maxlength="300" placeholder="e.g. The photo does not show the item."></textarea>
+                </div>
+                <div class="wizard-actions">
+                    <button type="button" class="glass-btn" onclick="closeModal('reject-modal')">Cancel</button>
+                    <button type="submit" class="glass-btn danger-btn">Reject listing</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- POPUP - Edit account (admin) -->
+    <div class="modal-overlay hidden" id="account-modal">
+        <div class="glass-card modal-card">
+            <div class="modal-header">
+                <h3>Edit account</h3>
+                <button class="close-btn" aria-label="Close dialog" onclick="closeModal('account-modal')">&times;</button>
+            </div>
+            <form novalidate id="account-form" onsubmit="handleEditAccount(event)">
+                <div class="input-group">
+                    <label for="acc-name">Username</label>
+                    <input type="text" id="acc-name" maxlength="20" autocomplete="off" required>
+                    <p class="input-hint">Renaming also updates the user's listings, chats and ratings.</p>
+                </div>
+                <div class="input-group">
+                    <label for="acc-email">Email</label>
+                    <input type="email" id="acc-email" autocomplete="off" required>
+                </div>
+                <div class="input-group">
+                    <label for="acc-password">New password <span class="optional">(optional)</span></label>
+                    <input type="text" id="acc-password" autocomplete="off" placeholder="Leave empty to keep the current password">
+                    <p class="input-hint">Required if you change the email. Min. 6 characters.</p>
+                </div>
+                <div class="wizard-actions">
+                    <button type="button" class="glass-btn" onclick="closeModal('account-modal')">Cancel</button>
+                    <button type="submit" class="glass-btn primary-btn" id="account-save-btn">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ========================================================== -->
