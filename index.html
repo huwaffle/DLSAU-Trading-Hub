@@ -784,4 +784,17 @@
         </div>
     </div>
 
-    <!-- ========================================================== -->
+    <!-- ========================================================== -->
+    <!-- SECTION D: NOTIFICATION AREA (toasts are created by feedback.js)
+         Toast wording lives in script.js under "MESSAGES". -->
+    <!-- ========================================================== -->
+    <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+    <!-- Supabase JS SDK (cloud database) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="feedback.js"></script>
+
+    <script src="script.js"></script>
+    <script src="background.js"></script>
+</body>
+</html>
