@@ -1,0 +1,41 @@
+/* ==========================================================
+   DLSAU Trading Hub - STYLESHEET
+
+   TABLE OF CONTENTS (search for the title in CAPITALS)
+    1. Design tokens - colours, fonts, spacing (EDIT COLORS HERE)
+    2. Surfaces - white cards and panels
+    3. Buttons
+    4. Login screen
+    5. Top bar
+    6. Page layout
+    7. Sidebar
+    8. Hero banner (home tab)
+    9. Section headings and card grid
+   10. Product cards (category colours live here)
+   11. Messages tab
+   12. Form inputs
+   13. Popups
+   14. Star ratings
+   15. Mobile bottom nav
+   16. Form validation - red errors and alert banner
+   17. Toast notifications
+   18. Animations and reduced motion
+   19. Responsive - tablet and phone
+   20. Login screen - forgot password spacing (bottom of file)
+   21. Input extras, loading spinner, confirm dialog (bottom of file)
+   22. Developers popup (bottom of file)
+   23. Account ratings and reviews (bottom of file)
+   24. Chat message actions and conversation delete (bottom of file)
+   25. Sell form wizard - stepper, progress bar, review (bottom of file)
+   26. Unread message badges (bottom of file)
+   27. Edit listing popup (bottom of file)
+   28. Chat header rate button and popover (bottom of file)
+   ========================================================== */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
