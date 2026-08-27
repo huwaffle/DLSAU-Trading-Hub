@@ -122,4 +122,26 @@ button, input, select, textarea { font: inherit; color: inherit; }
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
+
+/* ==========================================================
+   2. SURFACES - WHITE CARDS AND PANELS
+   ========================================================== */
+.glass-card, .glass-nav {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-sm);
+}
+
+.glass-nav { border-width: 0 0 1px 0; }
+
+.glass-input {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+
+.glass-input:focus-within, select.glass-input:focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(10, 122, 75, 0.15);
+}
 
