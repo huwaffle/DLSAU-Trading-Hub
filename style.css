@@ -212,4 +212,67 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .form-aside { display: flex; justify-content: flex-end; margin-bottom: 14px; }
 .form-aside.center-text { justify-content: center; margin: 14px 0 0; }
+
+/* ==========================================================
+   4. LOGIN SCREEN
+   ========================================================== */
+.auth-overlay {
+    position: fixed;
+    inset: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 400px;
+    padding: 32px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    animation: rise 400ms var(--ease) both;
+}
+
+.auth-tabs {
+    position: relative;
+    display: flex;
+    margin: 22px 0;
+    background: #E3F0E7;
+    border-radius: var(--radius-full);
+    padding: 4px;
+}
+/* Sliding white pill behind the active tab */
+.auth-tabs::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    border-radius: var(--radius-full);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    transition: transform 320ms var(--ease);
+}
+.auth-tabs[data-tab="register"]::before { transform: translateX(100%); }
+
+.tab-btn {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    background: none;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: var(--radius-full);
+    transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.tab-btn { position: relative; z-index: 1; }
+.tab-btn:hover { color: var(--ink); }
+.tab-btn.active { color: var(--primary-green); }
 
