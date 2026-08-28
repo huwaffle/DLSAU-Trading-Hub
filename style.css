@@ -275,4 +275,101 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .tab-btn { position: relative; z-index: 1; }
 .tab-btn:hover { color: var(--ink); }
 .tab-btn.active { color: var(--primary-green); }
+
+/* ==========================================================
+   5. TOP BAR
+   ========================================================== */
+.app-header {
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.header-content {
+    max-width: var(--max-width);
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.logo {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.logo i, .logo svg {
+    width: 30px;
+    height: 30px;
+    padding: 6px;
+    border-radius: 9px;
+    background: var(--primary-green);
+    color: var(--lime);
+    transition: transform var(--t-base) var(--ease);
+}
+.logo:hover svg { transform: rotate(-12deg); }
+.logo.center { justify-content: center; }
+
+.search-box {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+}
+
+.search-box input {
+    width: 100%;
+    height: 38px;
+    border: none;
+    background: transparent;
+    padding-left: 8px;
+    outline: none;
+    font-size: 13px;
+}
+.search-box i, .search-box svg { color: var(--text-muted); width: 18px; height: 18px; flex-shrink: 0; }
+
+.header-actions { display: flex; align-items: center; gap: 12px; }
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 4px 8px 4px 4px;
+    border-radius: var(--radius-full);
+    transition: background-color var(--t-fast) var(--ease);
+}
+.user-profile:hover { background: #E3F0E7; }
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    background-color: var(--primary-green);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+.avatar.large { width: 64px; height: 64px; font-size: 22px; margin: 0 auto 10px auto; }
+
+.user-info h4 { font-size: 13px; line-height: 1.2; }
+.user-info p { font-size: 11px; color: var(--text-muted); }
 
