@@ -372,4 +372,18 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .user-info h4 { font-size: 13px; line-height: 1.2; }
 .user-info p { font-size: 11px; color: var(--text-muted); }
+
+/* ==========================================================
+   6. PAGE LAYOUT
+   ========================================================== */
+.app-body {
+    max-width: var(--max-width);
+    width: 100%;
+    margin: 0 auto;
+    padding: 28px 20px;
+    display: grid;
+    grid-template-columns: 224px minmax(0, 1fr);
+    gap: 32px;
+    flex: 1;
+}
 
