@@ -386,4 +386,89 @@ button, input, select, textarea { font: inherit; color: inherit; }
     gap: 32px;
     flex: 1;
 }
+
+/* ==========================================================
+   7. SIDEBAR
+   ========================================================== */
+.sidebar-card {
+    padding: 18px 14px;
+    border-radius: var(--radius-md);
+    position: sticky;
+    top: 88px;
+}
+
+.sidebar-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin: 0 0 10px 10px;
+}
+
+.nav-menu, .category-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+
+.nav-item, .category-item {
+    --accent: var(--primary-green);
+    position: relative;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), transform var(--t-base) var(--ease);
+}
+
+.nav-item i, .nav-item svg, .category-item i, .category-item svg {
+    width: 17px;
+    height: 17px;
+    color: var(--accent);
+    transition: transform var(--t-base) var(--ease);
+}
+
+.nav-item::before, .category-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 22%;
+    bottom: 22%;
+    width: 3px;
+    border-radius: 3px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transition: transform var(--t-base) var(--ease);
+}
+
+.nav-item:hover, .category-item:hover { background: #EAF4EC; transform: translateX(3px); }
+.nav-item:hover i, .category-item:hover i, .nav-item:hover svg, .category-item:hover svg { transform: scale(1.12) rotate(-4deg); }
+
+.nav-item.active, .category-item.active {
+    background: color-mix(in srgb, var(--accent) 10%, white);
+    color: var(--accent);
+}
+.nav-item.active::before, .category-item.active::before { transform: scaleY(1); }
+
+#nav-home { --accent: var(--primary-green); }
+#nav-chat { --accent: var(--primary-green); }
+#nav-wishlist { --accent: var(--magenta); }
+.category-item[data-category="All"] { --accent: var(--ink); }
+.category-item[data-category="School Supplies"] { --accent: var(--primary-green); }
+.category-item[data-category="Electronics"] { --accent: var(--blue); }
+.category-item[data-category="Clothing & Accessories"] { --accent: var(--magenta); }
+.category-item[data-category="Sports & Hobbies"] { --accent: var(--orange); }
+.category-item[data-category="Other"] { --accent: var(--cyan); }
+
+.badge {
+    background: var(--coral);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: var(--radius-full);
+    margin-left: auto;
+}
 
