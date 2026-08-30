@@ -471,4 +471,52 @@ button, input, select, textarea { font: inherit; color: inherit; }
     border-radius: var(--radius-full);
     margin-left: auto;
 }
+
+/* ==========================================================
+   8. HERO BANNER (HOME TAB)
+   ========================================================== */
+.hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 180px;
+    align-items: center;
+    gap: 24px;
+    padding: 32px 36px;
+    margin-bottom: 32px;
+    border-radius: var(--radius-lg);
+    background: var(--primary-green);
+    color: #fff;
+    overflow: hidden;
+    animation: rise 450ms var(--ease) both;
+}
+
+.eyebrow {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    background: #0B1A0F;
+    color: var(--lime);
+    margin-bottom: 14px;
+}
+.hero .eyebrow { background: rgba(255, 255, 255, 0.16); color: #fff; border: 1px solid rgba(255, 255, 255, 0.35); }
+
+.hero h2 {
+    font-size: clamp(28px, 4.2vw, 46px);
+    line-height: 1.05;
+    font-weight: 700;
+    max-width: 17ch;
+    margin-bottom: 12px;
+}
+.hero h2 em { font-family: var(--font-accent); font-weight: 400; font-style: italic; letter-spacing: 0; color: var(--lime); }
+
+.hero-sub { max-width: 46ch; font-size: 14px; margin-bottom: 18px; color: rgba(255, 255, 255, 0.88); }
+.hero .primary-btn { background: #fff; color: var(--primary-green); }
+.hero .primary-btn:hover { background: var(--lime); color: #0B1A0F; box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.4); }
+
+.hero-art { width: 100%; height: auto; transition: transform 600ms var(--ease); }
+.hero:hover .hero-art { transform: rotate(4deg) scale(1.03); }
 
