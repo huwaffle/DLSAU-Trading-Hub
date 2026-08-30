@@ -519,4 +519,44 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .hero-art { width: 100%; height: auto; transition: transform 600ms var(--ease); }
 .hero:hover .hero-art { transform: rotate(4deg) scale(1.03); }
+
+/* ==========================================================
+   9. SECTION HEADINGS AND CARD GRID
+   ========================================================== */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+}
+.section-header h3 { font-size: 24px; font-weight: 700; }
+.item-count {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: #E3F0E7;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+}
+
+.cards-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+
+.empty-state {
+    grid-column: 1 / -1;
+    padding: 56px 20px;
+    text-align: center;
+    border-radius: var(--radius-lg);
+    border-style: dashed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+.empty-state i, .empty-state svg { width: 48px; height: 48px; padding: 11px; border-radius: 14px; background: #D8EDDF; color: var(--primary-green); }
+.empty-state h4 { font-size: 18px; font-weight: 700; }
+.empty-state p { font-size: 13px; color: var(--text-muted); max-width: 42ch; }
 
