@@ -777,4 +777,26 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .chat-input-area input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(10, 122, 75, 0.18); }
 .chat-input-area .primary-btn { background: var(--blue); }
 .chat-input-area .primary-btn:hover { background: var(--ink); }
+
+/* ==========================================================
+   12. FORM INPUTS
+   ========================================================== */
+.input-group { margin-bottom: 14px; text-align: left; }
+.input-group label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px; }
+
+.input-group input, .input-group textarea, .select-field {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    outline: none;
+    font-size: 13px;
+    transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+.input-group input:focus, .input-group textarea:focus, .select-field:focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(10, 122, 75, 0.15);
+}
+.input-group input::placeholder, .input-group textarea::placeholder { color: #98A0AA; }
 
