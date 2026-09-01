@@ -799,4 +799,47 @@ button, input, select, textarea { font: inherit; color: inherit; }
     box-shadow: 0 0 0 3px rgba(10, 122, 75, 0.15);
 }
 .input-group input::placeholder, .input-group textarea::placeholder { color: #98A0AA; }
+
+/* ==========================================================
+   13. POPUPS
+   ========================================================== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 24, 27, 0.45);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    padding: 20px;
+    overflow-y: auto;
+    animation: fade 200ms var(--ease) both;
+}
+
+.modal-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 26px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    animation: rise 300ms var(--ease) both;
+}
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.modal-header h3 { font-size: 20px; }
+
+.close-btn {
+    background: #E3F0E7;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), transform var(--t-base) var(--ease);
+}
+.close-btn:hover { background: var(--ink); color: #fff; transform: rotate(90deg); }
 
