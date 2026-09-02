@@ -854,4 +854,40 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .stars.interactive i:hover, .stars.interactive svg:hover { transform: scale(1.22) rotate(-6deg); }
 .stars.read-only i, .stars.read-only svg { cursor: default; }
 .rating-score { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+
+/* ==========================================================
+   15. MOBILE BOTTOM NAV
+   ========================================================== */
+.bottom-nav {
+    display: none;
+    height: 62px;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 100;
+    border-width: 1px 0 0 0;
+    background: rgba(255, 255, 255, 0.96);
+}
+
+.mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    transition: color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.mobile-nav-item i, .mobile-nav-item svg { width: 20px; height: 20px; }
+.mobile-nav-item:active { transform: scale(0.94); }
+.mobile-nav-item.active { color: var(--primary-green); }
+.mobile-nav-item.active svg { stroke-width: 2.6; }
+
 
