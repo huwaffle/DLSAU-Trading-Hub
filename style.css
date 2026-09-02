@@ -842,4 +842,16 @@ button, input, select, textarea { font: inherit; color: inherit; }
     transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), transform var(--t-base) var(--ease);
 }
 .close-btn:hover { background: var(--ink); color: #fff; transform: rotate(90deg); }
+
+/* ==========================================================
+   14. STAR RATINGS
+   ========================================================== */
+.rating-box { margin: 16px 0; padding: 14px; background: #EAF4EC; border: 1px solid var(--line); border-radius: var(--radius-md); }
+.rating-box h4 { font-size: 14px; }
+.stars { display: flex; justify-content: center; gap: 6px; margin: 8px 0; color: var(--yellow); }
+.stars i, .stars svg { width: 22px; height: 22px; }
+.stars.interactive i, .stars.interactive svg { cursor: pointer; transition: transform var(--t-fast) var(--ease); }
+.stars.interactive i:hover, .stars.interactive svg:hover { transform: scale(1.22) rotate(-6deg); }
+.stars.read-only i, .stars.read-only svg { cursor: default; }
+.rating-score { font-size: 12px; font-weight: 700; color: var(--text-muted); }
 
