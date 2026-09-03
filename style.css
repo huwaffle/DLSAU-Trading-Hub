@@ -890,4 +890,60 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .mobile-nav-item.active { color: var(--primary-green); }
 .mobile-nav-item.active svg { stroke-width: 2.6; }
 
+
+/* ==========================================================
+   16. FORM VALIDATION - RED ERRORS AND ALERT BANNER
+   ========================================================== */
+/* Alert tones: success = green, error = red, warning = amber, info = blue */
+:root {
+    --error: #C62828; --error-soft: #FDECEA;
+    --success: #0A7A4B; --success-soft: #E3F5EA;
+    --warning: #A65A00; --warning-soft: #FFF4D6;
+    --info: #1D4ED8; --info-soft: #E8EEFF;
+}
+
+.input-group input.invalid, .input-group textarea.invalid, .select-field.invalid {
+    border-color: var(--error);
+    background: var(--error-soft);
+}
+.input-group input.invalid:focus, .input-group textarea.invalid:focus {
+    border-color: var(--error);
+    box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.18);
+}
+.input-group.has-error label { color: var(--error); }
+
+.field-error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--error);
+    animation: slide-in 220ms var(--ease) both;
+}
+.field-error svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+.form-alert {
+    --tone: var(--error);
+    --tone-soft: var(--error-soft);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid color-mix(in srgb, var(--tone) 25%, white);
+    border-left: 4px solid var(--tone);
+    background: var(--tone-soft);
+    color: color-mix(in srgb, var(--tone) 75%, black);
+    font-size: 13px;
+    font-weight: 700;
+    animation: slide-in 260ms var(--ease) both;
+}
+.form-alert svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--tone); }
+.form-alert-success { --tone: var(--success); --tone-soft: var(--success-soft); }
+.form-alert-warning { --tone: var(--warning); --tone-soft: var(--warning-soft); }
+.form-alert-info { --tone: var(--info); --tone-soft: var(--info-soft); }
+
 
