@@ -1062,4 +1062,30 @@ button, input, select, textarea { font: inherit; color: inherit; }
     .card:hover, .glass-btn:hover { transform: none; }
     .toast-progress { animation: none; }
 }
+
+/* ==========================================================
+   19. RESPONSIVE - TABLET AND PHONE
+   ========================================================== */
+@media (max-width: 1000px) {
+    .cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 768px) {
+    .app-body { grid-template-columns: 1fr; padding: 20px 16px 88px; }
+    .sidebar, .hide-mobile { display: none; }
+    .bottom-nav { display: flex; }
+    .header-content { padding: 0 14px; gap: 10px; }
+    .logo span { display: none; }
+    .auth-card .logo span { display: inline; }
+    .hero { grid-template-columns: 1fr; padding: 24px; }
+    .hero-art { display: none; }
+    .section-header h3 { font-size: 20px; }
+    .chat-container { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: 540px; }
+    .chat-sidebar { max-height: 160px; border-right: none; border-bottom: 1px solid var(--line); }
+}
+
+@media (max-width: 520px) {
+    .cards-grid { grid-template-columns: minmax(0, 1fr); }
+    .auth-card, .modal-card { padding: 22px; }
+}
 
