@@ -1098,4 +1098,97 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .auth-heading p { font-size: 13px; color: var(--text-muted); max-width: 36ch; }
 #forgot-form .input-group { margin-bottom: 18px; }
 #forgot-form .form-aside.center-text { margin-top: 18px; }
+
+/* ==========================================================
+   21. INPUT EXTRAS, LOADING SPINNER, CONFIRM DIALOG
+   ========================================================== */
+
+/* --- Inputs: hover, focus label, valid state, helper text --- */
+.input-group input:hover:not(:focus):not(.invalid),
+.input-group textarea:hover:not(:focus):not(.invalid),
+.select-field:hover:not(:focus) { border-color: #9DBFA9; }
+.input-group:focus-within label { color: var(--primary-green); }
+.input-group.has-error:focus-within label { color: var(--error); }
+.input-group input.valid, .input-group textarea.valid { border-color: var(--success); }
+.input-hint { margin-top: 5px; font-size: 11.5px; color: var(--text-muted); }
+.input-group input[type="file"] { padding: 8px 10px; cursor: pointer; }
+.input-group input[type="file"]::file-selector-button {
+    margin-right: 10px;
+    padding: 5px 12px;
+    border: none;
+    border-radius: var(--radius-full);
+    background: var(--primary-green);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color var(--t-fast) var(--ease);
+}
+.input-group input[type="file"]::file-selector-button:hover { background: var(--ink); }
+
+/* --- Password show / hide --- */
+.input-wrap { position: relative; }
+.input-wrap input { padding-right: 42px; }
+.toggle-visibility {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.toggle-visibility svg { width: 17px; height: 17px; }
+.toggle-visibility:hover { background: #E3F0E7; color: var(--primary-green); }
+
+/* --- Loading spinner on buttons --- */
+.spinner { width: 16px; height: 16px; animation: spin 700ms linear infinite; }
+.glass-btn.is-loading { cursor: progress; opacity: 0.9; transform: none; }
+.glass-btn.is-loading:hover { transform: none; }
+
+.chat-input-area input.invalid, .msg-edit input.invalid { border-color: var(--error); background: var(--error-soft); color: var(--error); }
+.chat-input-area input.invalid:focus, .msg-edit input.invalid:focus { border-color: var(--error); box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.18); }
+.chat-alert-slot:empty { display: none; }
+.chat-alert-slot { padding: 10px 12px 0; background: var(--surface); }
+.chat-alert-slot .form-alert { margin-bottom: 0; }
+.msg-edit .form-alert { margin-bottom: 0; background: var(--tone-soft); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- Confirm dialog (confirmDialog in feedback.js) --- */
+.confirm-overlay { z-index: 900; }
+.confirm-card { --tone: var(--error); --tone-soft: var(--error-soft); max-width: 400px; text-align: center; }
+.confirm-warning { --tone: var(--warning); --tone-soft: var(--warning-soft); }
+.confirm-info { --tone: var(--info); --tone-soft: var(--info-soft); }
+.confirm-icon {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 14px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    background: var(--tone-soft);
+    color: var(--tone);
+}
+.confirm-icon svg { width: 26px; height: 26px; }
+.confirm-card h3 { font-size: 20px; margin-bottom: 8px; }
+.confirm-card p { font-size: 13.5px; color: var(--text-muted); margin: 0 auto 22px; max-width: 34ch; }
+.confirm-actions { display: flex; gap: 10px; }
+.confirm-actions .glass-btn { flex: 1; padding: 10px 16px; }
+.confirm-ok { background: var(--tone); border-color: transparent; color: #fff; }
+.confirm-ok:hover { background: color-mix(in srgb, var(--tone) 80%, black); border-color: transparent; }
+
+@media (max-width: 520px) {
+    .toast-stack { top: 76px; right: 16px; left: 16px; width: auto; }
+    .confirm-actions { flex-direction: column-reverse; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spinner { animation: none; }
+}
 
