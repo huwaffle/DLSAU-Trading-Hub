@@ -1088,4 +1088,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
     .cards-grid { grid-template-columns: minmax(0, 1fr); }
     .auth-card, .modal-card { padding: 22px; }
 }
+
+/* ==========================================================
+   LOGIN SCREEN - forgot password heading and spacing
+   ========================================================== */
+#forgot-form { margin-top: 26px; }
+.auth-heading { margin-bottom: 20px; text-align: left; }
+.auth-heading h3 { font-size: 20px; margin-bottom: 6px; }
+.auth-heading p { font-size: 13px; color: var(--text-muted); max-width: 36ch; }
+#forgot-form .input-group { margin-bottom: 18px; }
+#forgot-form .form-aside.center-text { margin-top: 18px; }
 
