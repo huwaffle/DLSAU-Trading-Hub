@@ -1265,4 +1265,71 @@ button, input, select, textarea { font: inherit; color: inherit; }
     .team-card h3 { font-size: 24px; }
     .team-item { font-size: 17px; }
 }
+
+/* ==========================================================
+   23. ACCOUNT RATINGS AND REVIEWS (summary, star input, review list)
+   ========================================================== */
+.profile-detail { text-align: center; }
+.modal-overlay .modal-card { margin: auto; }
+#seller-profile-modal .modal-card, #profile-modal .modal-card { max-width: 460px; }
+.rating-box { text-align: left; }
+.rating-box > h4 { font-size: 15px; margin-bottom: 12px; }
+.rating-note { margin-top: 10px; font-size: 11.5px; }
+
+/* Stars: outline when empty, yellow when filled */
+.star { fill: none; stroke: #8FAF9B; stroke-width: 2; transition: fill var(--t-fast) var(--ease), stroke var(--t-fast) var(--ease), transform var(--t-fast) var(--ease); }
+.star.filled { fill: var(--yellow); stroke: #D98A00; }
+
+/* Summary: big average on the left, 5-to-1 bars on the right */
+.rating-summary { display: grid; grid-template-columns: 112px 1fr; gap: 18px; align-items: center; }
+.summary-score { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.summary-score strong { font-family: var(--font-display); font-size: 40px; line-height: 1; color: var(--ink); }
+.summary-stars { display: flex; gap: 1px; }
+.summary-count { font-size: 11.5px; font-weight: 700; color: var(--text-muted); }
+.summary-bars { display: flex; flex-direction: column; gap: 5px; }
+.bar-row { display: grid; grid-template-columns: 10px 12px 1fr 18px; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--text-muted); }
+.bar-row em { font-style: normal; text-align: right; }
+.bar { height: 6px; border-radius: var(--radius-full); background: #DDEBE1; overflow: hidden; }
+.bar > span { display: block; height: 100%; border-radius: inherit; background: var(--primary-green); transition: width 500ms var(--ease); }
+
+/* Rating form */
+.rate-form { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.optional { font-weight: 500; color: var(--text-muted); }
+.star-input { display: flex; gap: 4px; }
+.star-btn {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    cursor: pointer;
+    transition: background-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.star-btn:hover { background: #E3F0E7; transform: scale(1.12); }
+.star-btn:active { transform: scale(0.95); }
+.rate-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.rate-actions .primary-btn { flex: 1; }
+.rate-form .input-hint { text-align: right; }
+
+/* Review list */
+.review-list { list-style: none; margin-top: 16px; display: flex; flex-direction: column; gap: 10px; max-height: 220px; overflow-y: auto; }
+.review-item { padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); animation: rise 300ms var(--ease) backwards; }
+.review-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.review-name { font-family: var(--font-display); font-size: 13px; }
+.review-stars { display: inline-flex; gap: 1px; }
+.review-date { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+.review-text { margin-top: 4px; font-size: 13px; word-break: break-word; }
+.review-empty { font-size: 12px; color: var(--text-muted); text-align: center; padding: 6px 0; }
+
+@media (max-width: 520px) {
+    .rating-summary { grid-template-columns: 1fr; }
+    .summary-score { flex-direction: row; justify-content: center; gap: 10px; }
+}
+
+/* Category dropdown: muted placeholder until a category is chosen, red asterisk for required */
+.select-field:required:invalid { color: #98A0AA; }
+.select-field option { color: var(--ink); }
+.required-mark { color: var(--error); font-weight: 700; }
 
