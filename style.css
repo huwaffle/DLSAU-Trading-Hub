@@ -1191,4 +1191,78 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
     .spinner { animation: none; }
 }
+
+/* ==========================================================
+   22. DEVELOPERS POPUP (leaf logo) - bullet colour is --c in .team-item
+   ========================================================== */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.logo-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 10px 4px 4px;
+    border-radius: var(--radius-md);
+    transition: background-color var(--t-fast) var(--ease);
+}
+.logo-btn:hover { background: #E3F0E7; }
+.logo-btn:hover svg { transform: rotate(-12deg) scale(1.08); }
+
+#team-modal .modal-card { max-width: 460px; }
+.team-card .modal-header { align-items: flex-start; }
+.team-card .eyebrow { margin-bottom: 10px; }
+.team-card h3 { font-size: 28px; line-height: 1.1; }
+.team-card h3 em { font-family: var(--font-accent); font-weight: 400; font-style: italic; letter-spacing: 0; }
+
+.team-list { list-style: none; margin: 6px 0 14px; counter-reset: none; }
+
+.team-item {
+    --c: var(--primary-green);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    cursor: default;
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    transition: background-color var(--t-base) var(--ease), color var(--t-base) var(--ease), padding-left var(--t-base) var(--ease);
+    animation: rise 420ms var(--ease) backwards;
+    animation-delay: calc(var(--i) * 70ms + 120ms);
+}
+.team-item::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--c);
+    transition: transform var(--t-base) var(--ease);
+}
+.team-item:last-child { border-bottom-color: transparent; }
+
+
+.team-item:hover { background: color-mix(in srgb, var(--c) 8%, white); color: var(--c); padding-left: 18px; }
+.team-item:hover::before { transform: scale(1.8); }
+
+.team-foot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.team-foot svg { width: 14px; height: 14px; color: var(--primary-green); }
+
+@media (max-width: 520px) {
+    .team-card h3 { font-size: 24px; }
+    .team-item { font-size: 17px; }
+}
 
