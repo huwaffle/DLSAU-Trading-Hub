@@ -1419,4 +1419,73 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .msg-edit-cancel:hover { background: rgba(255, 255, 255, 0.35); }
 .msg-edit-save { background: #fff; color: var(--primary-green); }
 .msg-edit-save:hover { background: var(--lime); color: #0B1A0F; }
+
+/* ==========================================================
+   25. SELL FORM WIZARD - stepper, progress bar, photo preview, review
+   ========================================================== */
+.wizard-card { max-width: 480px; }
+
+.stepper { list-style: none; display: flex; justify-content: space-between; margin: 4px 0 14px; }
+.step-dot { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; font-size: 11.5px; font-weight: 700; color: var(--text-muted); }
+.step-dot::before {
+    content: "";
+    position: absolute;
+    top: 14px;
+    right: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--line);
+    z-index: 0;
+    transition: background-color var(--t-base) var(--ease);
+}
+.step-dot:first-child::before { display: none; }
+.step-dot.done::before, .step-dot.current::before { background: var(--primary-green); }
+.step-circle {
+    position: relative;
+    z-index: 1;
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    background: var(--surface);
+    font-family: var(--font-display);
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: background-color var(--t-base) var(--ease), border-color var(--t-base) var(--ease), color var(--t-base) var(--ease), transform var(--t-base) var(--ease);
+}
+.step-dot.current .step-circle { border-color: var(--primary-green); color: var(--primary-green); transform: scale(1.1); box-shadow: 0 0 0 4px rgba(10, 122, 75, 0.15); }
+.step-dot.done .step-circle { background: var(--primary-green); border-color: var(--primary-green); color: #fff; }
+.step-dot.current .step-name, .step-dot.done .step-name { color: var(--ink); }
+
+.progress-track { height: 6px; border-radius: var(--radius-full); background: #DDEBE1; overflow: hidden; }
+.progress-track > span { display: block; height: 100%; width: 25%; border-radius: inherit; background: var(--primary-green); transition: width 400ms var(--ease); }
+.step-count { margin: 8px 0 16px; font-size: 12px; font-weight: 700; color: var(--text-muted); }
+
+.wizard-step { animation: step-in 260ms var(--ease) both; }
+.wizard-step h4 { font-size: 18px; margin-bottom: 2px; }
+.step-hint { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+@keyframes step-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+
+.wizard-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+.wizard-actions .primary-btn { min-width: 140px; }
+
+.upload-preview { display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius-md); background: #F3F9F5; }
+.upload-preview img { width: 64px; height: 64px; flex-shrink: 0; object-fit: cover; border-radius: var(--radius-sm); }
+.upload-preview-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.upload-preview-info strong { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upload-preview-info span { font-size: 12px; color: var(--text-muted); }
+
+.review-card { border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; background: var(--surface); }
+.review-photo { display: block; width: 100%; height: 170px; object-fit: cover; }
+.review-card dl { padding: 12px 14px; display: grid; grid-template-columns: 90px 1fr; gap: 8px 12px; }
+.review-card dt { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+.review-card dd { font-size: 13.5px; word-break: break-word; }
+
+@media (max-width: 520px) {
+    .step-dot:not(.current) .step-name { display: none; }
+    .review-card dl { grid-template-columns: 1fr; gap: 2px; }
+    .review-card dd { margin-bottom: 8px; }
+}
 
