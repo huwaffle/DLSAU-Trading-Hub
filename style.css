@@ -1332,4 +1332,91 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .select-field:required:invalid { color: #98A0AA; }
 .select-field option { color: var(--ink); }
 .required-mark { color: var(--error); font-weight: 700; }
+
+/* ==========================================================
+   24. CHAT MESSAGE ACTIONS AND CONVERSATION DELETE
+   ========================================================== */
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-full);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.icon-btn svg, .icon-btn i { width: 17px; height: 17px; }
+.icon-btn:hover { transform: translateY(-1px); }
+.icon-btn.danger-hover:hover { background: var(--error-soft); color: var(--error); border-color: #F3B7B2; }
+
+.chat-bubble { position: relative; }
+.msg-actions {
+    position: absolute;
+    top: -14px;
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-full);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    opacity: 0;
+    transform: translateY(4px);
+    pointer-events: none;
+    transition: opacity var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.chat-bubble.mine .msg-actions { right: 8px; }
+.chat-bubble:hover .msg-actions, .chat-bubble:focus-within .msg-actions { opacity: 1; transform: none; pointer-events: auto; }
+.msg-actions button {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.msg-actions svg, .msg-actions i { width: 14px; height: 14px; }
+.msg-actions .msg-action-edit:hover { background: #E3F0E7; color: var(--primary-green); }
+.msg-actions .msg-action-delete:hover { background: var(--error-soft); color: var(--error); }
+
+@media (hover: none) {
+    .msg-actions { opacity: 1; transform: none; pointer-events: auto; position: static; margin-top: 6px; justify-content: flex-end; background: transparent; border: none; box-shadow: none; padding: 0; }
+    .msg-actions button { background: rgba(255, 255, 255, 0.2); color: #fff; }
+}
+
+.chat-bubble.editing { width: min(100%, 420px); max-width: 100%; }
+.msg-edit { display: flex; flex-direction: column; gap: 8px; }
+.msg-edit input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: var(--radius-sm);
+    background: #fff;
+    color: var(--ink);
+    outline: none;
+    font-size: 13px;
+}
+.msg-edit input:focus { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4); }
+.msg-edit-actions { display: flex; justify-content: flex-end; gap: 6px; }
+.msg-edit-actions button {
+    padding: 4px 12px;
+    border: none;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color var(--t-fast) var(--ease);
+}
+.msg-edit-cancel { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.msg-edit-cancel:hover { background: rgba(255, 255, 255, 0.35); }
+.msg-edit-save { background: #fff; color: var(--primary-green); }
+.msg-edit-save:hover { background: var(--lime); color: #0B1A0F; }
 
