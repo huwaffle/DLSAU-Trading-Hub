@@ -1578,4 +1578,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
     transform: none;
     box-shadow: none;
 }
+
+/* ==========================================================
+   27. EDIT LISTING - pencil button on own cards and the edit popup
+   ========================================================== */
+.card-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; align-items: center; }
+#edit-modal .modal-card { max-width: 480px; }
+#edit-preview { margin-bottom: 0; }
+
+/* Wishlist badge uses the wishlist colour so it differs from the red Messages badge */
+.badge-wish { background: var(--magenta); }
 
