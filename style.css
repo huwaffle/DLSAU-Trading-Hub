@@ -1588,4 +1588,54 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 /* Wishlist badge uses the wishlist colour so it differs from the red Messages badge */
 .badge-wish { background: var(--magenta); }
+
+/* ==========================================================
+   28. CHAT HEADER - Rate button and quick rating popover
+   ========================================================== */
+.chat-header { position: relative; }
+.chat-header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.rate-btn { padding: 6px 12px; font-size: 12px; }
+.rate-btn svg { fill: none; transition: fill var(--t-fast) var(--ease), stroke var(--t-fast) var(--ease), transform var(--t-base) var(--ease); }
+.rate-btn:hover svg { transform: rotate(-12deg) scale(1.15); }
+.rate-btn.rated { border-color: #E0B040; background: #FFF8E1; }
+.rate-btn.rated svg { fill: var(--yellow); stroke: #D98A00; }
+
+.rate-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 16px;
+    z-index: 20;
+    width: min(320px, calc(100% - 24px));
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: 0 18px 40px -10px rgba(15, 36, 24, 0.35), 0 4px 12px rgba(15, 36, 24, 0.12);
+    animation: rise 220ms var(--ease) backwards;
+}
+.rate-pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rate-pop-head strong { font-family: var(--font-display); font-size: 15px; }
+.rate-pop-close { width: 28px; height: 28px; border: none; border-radius: var(--radius-full); background: #E3F0E7; color: var(--text-muted); font-size: 18px; line-height: 1; cursor: pointer; transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
+.rate-pop-close:hover { background: var(--ink); color: #fff; }
+.rate-pop-sub { margin: 2px 0 8px; font-size: 12px; color: var(--text-muted); }
+.rate-popover .star-input { justify-content: center; margin-bottom: 6px; }
+.rate-pop-error { margin: 0 0 8px; font-size: 12px; font-weight: 700; color: var(--error); text-align: center; }
+.rate-popover input[type="text"] {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    outline: none;
+    font-size: 13px;
+    transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+.rate-popover input[type="text"]:focus { border-color: var(--primary-green); box-shadow: 0 0 0 3px rgba(10, 122, 75, 0.15); }
+.rate-pop-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
+.rate-pop-link { background: none; border: none; cursor: pointer; font-family: inherit; }
+
+@media (max-width: 520px) {
+    .rate-btn span { display: none; }
+    .rate-btn { padding: 8px 10px; }
+    .rate-popover { right: 12px; left: 12px; width: auto; }
+}
 
