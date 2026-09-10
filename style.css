@@ -1791,4 +1791,76 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .sk-col { flex: 1; }
 .skeleton-stat { cursor: default; }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } .top-progress span { transition: none; } }
+
+/* ==========================================================
+   30. Notifications delete, mobile layout and on-screen keyboard
+   ========================================================== */
+.notif-item { position: relative; padding-right: 36px; }
+.notif-delete {
+    position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border: none; border-radius: 50%;
+    background: transparent; color: var(--text-muted); font-size: 18px; line-height: 1; cursor: pointer;
+}
+.notif-delete:hover { background: var(--error-soft); color: var(--error); }
+.notif-clear { margin-left: auto; margin-right: 10px; padding: 5px 12px; font-size: 12px; }
+.chat-back-btn { display: none; }
+
+body { overflow-x: hidden; }
+img, svg { max-width: 100%; }
+
+.modal-overlay { align-items: flex-start; }
+.modal-card { margin: auto; max-height: calc(var(--vvh, 100dvh) - 40px); overflow-y: auto; }
+.auth-overlay { align-items: flex-start; }
+.auth-card { margin: auto; }
+
+@media (max-width: 768px) {
+    .search-box { min-width: 0; flex: 1; }
+    .header-actions { gap: 8px; flex: none; }
+    .chat-container {
+        grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr);
+        height: calc(var(--vvh, 100dvh) - 64px - 62px - 36px);
+        min-height: 360px;
+    }
+    .chat-container .chat-sidebar { max-height: none; border-bottom: none; }
+    .chat-container .chat-main { display: none; }
+    .chat-container.chat-open .chat-main { display: flex; }
+    .chat-container.chat-open .chat-sidebar { display: none; }
+    .chat-back-btn { display: inline-flex; }
+    .chat-header { gap: 8px; }
+    .chat-header-actions { gap: 6px; }
+    .chat-bubble { max-width: 88%; }
+    .chat-listing { min-width: 0; }
+    .rate-popover { right: 8px; left: 8px; width: auto; }
+    .admin-panel { padding: 12px; }
+    .admin-stat { padding: 12px 14px; }
+    .admin-stat-text strong { font-size: 24px; }
+    .admin-tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+    .admin-tab { white-space: nowrap; }
+    .toast-stack { left: 10px; right: 10px; width: auto; }
+}
+
+@media (max-width: 520px) {
+    .app-body { padding: 14px 12px 84px; }
+    .hero { padding: 18px; }
+    .hero h2 { font-size: 28px; }
+    .modal-overlay, .auth-overlay { padding: 12px; }
+    .modal-card, .auth-card { padding: 18px; }
+    .wizard-actions { flex-wrap: wrap; }
+    .section-header { flex-wrap: wrap; gap: 6px; }
+    .card-actions { flex-wrap: wrap; }
+}
+
+/* 16px inputs stop iOS from zooming in when a field is focused */
+@media (max-width: 768px) {
+    input, select, textarea { font-size: 16px !important; }
+}
+
+/* Keyboard open: hide the bottom bar and fit the chat to the visible area */
+body.kb-open .bottom-nav { display: none; }
+body.kb-open .app-body { padding-bottom: 12px; }
+@media (max-width: 768px) {
+    body.kb-open .chat-container { height: calc(var(--vvh, 100dvh) - 64px - 16px); min-height: 0; }
+    body.kb-open .chat-input-area { padding-bottom: 8px; }
+}
+.chat-input-area { padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+.bottom-nav { padding-bottom: env(safe-area-inset-bottom); height: calc(62px + env(safe-area-inset-bottom)); }
 
