@@ -23,4 +23,19 @@
 
     const pointer = { x: -9999, y: -9999, active: false };
     let w = 0, h = 0, dpr = 1, stars = [], ripples = [], raf = 0, last = 0;
+
+    function makeStar() {
+        const big = Math.random() < 0.18;
+        return {
+            x: Math.random() * w,
+            y: Math.random() * h,
+            vx: (Math.random() - 0.5) * 0.18,
+            vy: (Math.random() - 0.5) * 0.18,
+            r: big ? 6 + Math.random() * 3 : 2.5 + Math.random() * 2.5,
+            rot: Math.random() * Math.PI,
+            spin: (Math.random() - 0.5) * 0.004,
+            phase: Math.random() * Math.PI * 2,
+            gold: Math.random() < 0.08
+        };
+    }
 
