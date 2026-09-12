@@ -52,4 +52,15 @@
         draw(performance.now());
     }
 
-    // Eight-pointed star: 16 vertices alternating outer / inner radius
+    // Eight-pointed star: 16 vertices alternating outer / inner radius
+    function starPath(x, y, r, rot) {
+        ctx.beginPath();
+        for (let i = 0; i < 16; i++) {
+            const rad = i % 2 === 0 ? r : r * 0.42;
+            const a = rot + (i * Math.PI) / 8;
+            const px = x + Math.cos(a) * rad, py = y + Math.sin(a) * rad;
+            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+    }
+
