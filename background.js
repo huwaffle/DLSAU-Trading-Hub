@@ -38,4 +38,18 @@
             gold: Math.random() < 0.08
         };
     }
-
+
+    function resize() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        w = window.innerWidth;
+        h = window.innerHeight;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        const target = Math.min(MAX_STARS, Math.round((w * h) / DENSITY));
+        while (stars.length < target) stars.push(makeStar());
+        stars.length = target;
+        stars.forEach(s => { s.x = Math.min(s.x, w); s.y = Math.min(s.y, h); });
+        draw(performance.now());
+    }
+
+    // Eight-pointed star: 16 vertices alternating outer / inner radius
