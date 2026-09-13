@@ -63,4 +63,40 @@
         }
         ctx.closePath();
     }
+
+    function update(dt) {
+        const f = dt / 16.67;
+        for (const s of stars) {
+            s.x += s.vx * f;
+            s.y += s.vy * f;
+            s.rot += s.spin * f;
+            if (s.x < -10) s.x = w + 10; else if (s.x > w + 10) s.x = -10;
+            if (s.y < -10) s.y = h + 10; else if (s.y > h + 10) s.y = -10;
+
+            if (pointer.active) {
+                const dx = pointer.x - s.x, dy = pointer.y - s.y;
+                const d = Math.hypot(dx, dy);
+                if (d < CURSOR_RADIUS && d > 1) {
+                    const k = 1 - d / CURSOR_RADIUS;
+                    s.x += (dx / d) * k * 0.35 * f;
+                    s.y += (dy / d) * k * 0.35 * f;
+                    s.rot += k * 0.03 * f;
+                }
+            }
+        }
+        for (const rp of ripples) {
+            rp.r += 5 * f;
+            rp.life -= 0.018 * f;
+            for (const s of stars) {
+                const dx = s.x - rp.x, dy = s.y - rp.y;
+                const d = Math.hypot(dx, dy);
+                if (Math.abs(d - rp.r) < 26 && d > 1) {
+                    s.x += (dx / d) * 2.2 * f;
+                    s.y += (dy / d) * 2.2 * f;
+                    s.rot += 0.05 * f;
+                }
+            }
+        }
+        ripples = ripples.filter(rp => rp.life > 0);
+    }
 
