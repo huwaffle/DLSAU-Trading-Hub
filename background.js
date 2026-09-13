@@ -99,4 +99,69 @@
         }
         ripples = ripples.filter(rp => rp.life > 0);
     }
+
+    function draw(t) {
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, w, h);
+        const live = !reduce.matches;
+
+        // Lines between neighbouring stars
+        ctx.lineWidth = 1;
+        for (let i = 0; i < stars.length; i++) {
+            for (let j = i + 1; j < stars.length; j++) {
+                const dx = stars[i].x - stars[j].x, dy = stars[i].y - stars[j].y;
+                if (Math.abs(dx) > LINK_DIST || Math.abs(dy) > LINK_DIST) continue;
+                const d = Math.hypot(dx, dy);
+                if (d < LINK_DIST) {
+                    ctx.strokeStyle = `rgba(${GREEN}, ${(1 - d / LINK_DIST) * LINE_ALPHA})`;
+                    ctx.beginPath();
+                    ctx.moveTo(stars[i].x, stars[i].y);
+                    ctx.lineTo(stars[j].x, stars[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // Lines from the cursor to nearby stars
+        if (live && pointer.active) {
+            for (const s of stars) {
+                const d = Math.hypot(s.x - pointer.x, s.y - pointer.y);
+                if (d < CURSOR_RADIUS) {
+                    ctx.strokeStyle = `rgba(${GREEN}, ${(1 - d / CURSOR_RADIUS) * 0.5})`;
+                    ctx.beginPath();
+                    ctx.moveTo(pointer.x, pointer.y);
+                    ctx.lineTo(s.x, s.y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // Click ripples
+        for (const rp of ripples) {
+            ctx.strokeStyle = `rgba(${GREEN}, ${Math.max(rp.life, 0) * 0.35})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // Stars
+        for (const s of stars) {
+            let r = s.r, alpha = STAR_ALPHA;
+            if (live) {
+                alpha += Math.sin(t / 1100 + s.phase) * 0.07;
+                if (pointer.active) {
+                    const d = Math.hypot(s.x - pointer.x, s.y - pointer.y);
+                    if (d < CURSOR_RADIUS) {
+                        const k = 1 - d / CURSOR_RADIUS;
+                        r *= 1 + k * 1.1;
+                        alpha += k * 0.5;
+                    }
+                }
+            }
+            ctx.fillStyle = `rgba(${s.gold ? GOLD : GREEN}, ${alpha})`;
+            starPath(s.x, s.y, r, s.rot);
+            ctx.fill();
+        }
+    }
 
