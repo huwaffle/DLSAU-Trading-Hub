@@ -172,4 +172,25 @@
         draw(t);
         raf = requestAnimationFrame(loop);
     }
-
+
+    function start() {
+        cancelAnimationFrame(raf);
+        last = 0;
+        if (reduce.matches) draw(0);
+        else raf = requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('pointermove', e => { pointer.x = e.clientX; pointer.y = e.clientY; pointer.active = true; }, { passive: true });
+    window.addEventListener('pointerleave', () => { pointer.active = false; });
+    window.addEventListener('pointerup', e => { if (e.pointerType === 'touch') pointer.active = false; });
+    window.addEventListener('pointerdown', e => {
+        if (reduce.matches) return;
+        ripples.push({ x: e.clientX, y: e.clientY, r: 8, life: 1 });
+    }, { passive: true });
+    window.addEventListener('resize', resize);
+    document.addEventListener('visibilitychange', () => document.hidden ? cancelAnimationFrame(raf) : start());
+    reduce.addEventListener('change', start);
+
+    resize();
+    start();
+})();
