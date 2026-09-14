@@ -164,4 +164,12 @@
             ctx.fill();
         }
     }
+
+    function loop(t) {
+        const dt = Math.min(t - last || 16.67, 50);
+        last = t;
+        update(dt);
+        draw(t);
+        raf = requestAnimationFrame(loop);
+    }
 
