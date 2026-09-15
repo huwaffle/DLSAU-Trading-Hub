@@ -41,4 +41,36 @@
         el.addEventListener('animationend', e => { if (e.target === el) el.remove(); });
         setTimeout(() => el.remove(), 600);
     }
-
+
+    window.showToast = function (message, type, title) {
+        const stack = document.getElementById('toast-stack');
+        if (!stack) return;
+        type = ICONS[type] && TITLES[type] ? type : inferType(String(message));
+        const duration = DURATIONS[type];
+
+        const el = document.createElement('div');
+        el.className = `toast-item toast-${type}`;
+        el.setAttribute('role', type === 'error' || type === 'warning' ? 'alert' : 'status');
+        el.style.setProperty('--duration', duration + 'ms');
+        el.innerHTML = `
+            <span class="toast-icon">${svg(type)}</span>
+            <div class="toast-body"><strong class="toast-title"></strong><span class="toast-text"></span></div>
+            <button type="button" class="toast-close" aria-label="Dismiss notification">${svg('close')}</button>
+            <span class="toast-progress"></span>`;
+        el.querySelector('.toast-title').textContent = title || TITLES[type];
+        el.querySelector('.toast-text').textContent = message;
+        el.querySelector('.toast-close').addEventListener('click', () => dismiss(el));
+
+        let timer = setTimeout(() => dismiss(el), duration);
+        const pause = () => { clearTimeout(timer); el.classList.add('paused'); };
+        const resume = () => { el.classList.remove('paused'); timer = setTimeout(() => dismiss(el), 1500); };
+        el.addEventListener('mouseenter', pause);
+        el.addEventListener('mouseleave', resume);
+        el.addEventListener('focusin', pause);
+        el.addEventListener('focusout', resume);
+
+        stack.appendChild(el);
+        while (stack.children.length > 4) dismiss(stack.firstElementChild);
+    };
+
+    /* ---------- 3. FIELD ERRORS & FORM ALERTS ---------- */
