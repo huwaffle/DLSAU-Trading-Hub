@@ -73,4 +73,12 @@
         while (stack.children.length > 4) dismiss(stack.firstElementChild);
     };
 
-    /* ---------- 3. FIELD ERRORS & FORM ALERTS ---------- */
+    /* ---------- 3. FIELD ERRORS & FORM ALERTS ---------- */
+    function shake(el) {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        el.animate(
+            [0, -8, 8, -8, 8, -5, 5, -2, 0].map(x => ({ transform: `translateX(${x}px)` })),
+            { duration: 480, easing: 'cubic-bezier(0.36, 0.07, 0.19, 0.97)' }
+        );
+    }
+
