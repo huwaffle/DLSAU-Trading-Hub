@@ -93,4 +93,10 @@
             err.remove();
         }
     }
-
+
+    function clearErrors(form) {
+        form.querySelectorAll('.invalid, .valid').forEach(clearField);
+        form.querySelector('.form-alert')?.remove();
+    }
+
+    let uid = 0;
