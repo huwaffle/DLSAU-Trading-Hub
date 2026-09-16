@@ -81,4 +81,16 @@
             { duration: 480, easing: 'cubic-bezier(0.36, 0.07, 0.19, 0.97)' }
         );
     }
+
+    function clearField(input) {
+        input.classList.remove('invalid', 'valid');
+        input.removeAttribute('aria-invalid');
+        const group = input.closest('.input-group');
+        group?.classList.remove('has-error');
+        const err = group?.querySelector('.field-error');
+        if (err) {
+            input.removeAttribute('aria-describedby');
+            err.remove();
+        }
+    }
 
