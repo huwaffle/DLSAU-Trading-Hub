@@ -99,4 +99,22 @@
         form.querySelector('.form-alert')?.remove();
     }
 
-    let uid = 0;
+    let uid = 0;
+    function setFieldError(input, message) {
+        clearField(input);
+        const group = input.closest('.input-group');
+        input.classList.add('invalid');
+        input.setAttribute('aria-invalid', 'true');
+        if (!group) return;
+        group.classList.add('has-error');
+        const p = document.createElement('p');
+        p.className = 'field-error';
+        p.id = `field-error-${++uid}`;
+        p.setAttribute('role', 'alert');
+        p.innerHTML = svg('error');
+        p.appendChild(document.createTextNode(message));
+        group.appendChild(p);
+        input.setAttribute('aria-describedby', p.id);
+    }
+
+    /* Reusable inline alert: type = error | warning | info | success */
