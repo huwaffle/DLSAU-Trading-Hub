@@ -117,4 +117,17 @@
         input.setAttribute('aria-describedby', p.id);
     }
 
-    /* Reusable inline alert: type = error | warning | info | success */
+    /* Reusable inline alert: type = error | warning | info | success */
+    function formAlert(form, message, type = 'error') {
+        form.querySelector('.form-alert')?.remove();
+        const box = document.createElement('div');
+        box.className = `form-alert form-alert-${type}`;
+        box.setAttribute('role', 'alert');
+        box.innerHTML = svg(type);
+        const span = document.createElement('span');
+        span.textContent = message;
+        box.appendChild(span);
+        form.prepend(box);
+    }
+
+    /* checks: [[inputId, (value, el) => 'error message' | ''], ...] */
