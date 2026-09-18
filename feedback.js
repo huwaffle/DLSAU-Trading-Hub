@@ -148,4 +148,13 @@
         failed[0].focus();
         return false;
     };
+
+    window.failForm = function (form, inputId, message) {
+        clearErrors(form);
+        const el = document.getElementById(inputId);
+        if (el) setFieldError(el, message);
+        formAlert(form, message);
+        shake(form.closest('.auth-card, .modal-card') || form);
+        el?.focus();
+    };
 
