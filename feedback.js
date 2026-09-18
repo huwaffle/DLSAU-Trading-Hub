@@ -130,4 +130,22 @@
         form.prepend(box);
     }
 
-    /* checks: [[inputId, (value, el) => 'error message' | ''], ...] */
+    /* checks: [[inputId, (value, el) => 'error message' | ''], ...] */
+    window.validateForm = function (form, checks) {
+        clearErrors(form);
+        const failed = [];
+        const passed = [];
+        checks.forEach(([id, test]) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const msg = test(el.type === 'file' ? el.files[0] : el.value.trim(), el);
+            if (msg) { setFieldError(el, msg); failed.push(el); } else passed.push(el);
+        });
+        if (!failed.length) return true;
+        passed.forEach(el => { if (el.value) el.classList.add('valid'); });
+        formAlert(form, failed.length === 1 ? 'Please fix the highlighted field.' : `Please fix the ${failed.length} highlighted fields.`);
+        shake(form.closest('.auth-card, .modal-card') || form);
+        failed[0].focus();
+        return false;
+    };
+
