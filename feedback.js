@@ -157,4 +157,5 @@
         shake(form.closest('.auth-card, .modal-card') || form);
         el?.focus();
     };
-
+
+    window.clearFormErrors = clearErrors;
