@@ -158,4 +158,10 @@
         el?.focus();
     };
 
-    window.clearFormErrors = clearErrors;
+    window.clearFormErrors = clearErrors;
+    window.formAlert = formAlert;
+
+    document.addEventListener('input', e => { if (e.target.classList?.contains('invalid') || e.target.classList?.contains('valid')) clearField(e.target); });
+    document.addEventListener('change', e => { if (e.target.classList?.contains('invalid') || e.target.classList?.contains('valid')) clearField(e.target); });
+
+    /* ---------- 4. LOADING BUTTONS ---------- */
