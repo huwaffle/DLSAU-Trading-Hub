@@ -180,4 +180,13 @@
             btn.classList.remove('is-loading');
             btn.disabled = false;
             btn.removeAttribute('aria-busy');
-            delete btn.dataset.label;
+            delete btn.dataset.label;
+            window.lucide?.createIcons();
+        }
+    };
+
+    /* ---------- 5. CONFIRM DIALOG ----------
+       const ok = await confirmDialog({ title, message, confirmText, cancelText, tone, icon, warnings, requireText })
+       tone: 'danger' | 'warning' | 'info'   icon: 'trash' | 'logout' | 'warning' | 'info'
+       warnings:    optional list of short warning lines shown in a highlighted box
+       requireText: optional text the user must type exactly before the confirm button unlocks */
