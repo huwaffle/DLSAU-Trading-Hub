@@ -164,4 +164,20 @@
     document.addEventListener('input', e => { if (e.target.classList?.contains('invalid') || e.target.classList?.contains('valid')) clearField(e.target); });
     document.addEventListener('change', e => { if (e.target.classList?.contains('invalid') || e.target.classList?.contains('valid')) clearField(e.target); });
 
-    /* ---------- 4. LOADING BUTTONS ---------- */
+    /* ---------- 4. LOADING BUTTONS ---------- */
+    window.setButtonLoading = function (btn, loading, label) {
+        if (!btn) return;
+        if (loading) {
+            if (btn.classList.contains('is-loading')) return;
+            btn.dataset.label = btn.innerHTML;
+            btn.classList.add('is-loading');
+            btn.disabled = true;
+            btn.setAttribute('aria-busy', 'true');
+            btn.innerHTML = `${svg('spinner', 'spinner')}<span></span>`;
+            btn.lastElementChild.textContent = label || 'Please wait...';
+        } else if (btn.classList.contains('is-loading')) {
+            btn.innerHTML = btn.dataset.label;
+            btn.classList.remove('is-loading');
+            btn.disabled = false;
+            btn.removeAttribute('aria-busy');
+            delete btn.dataset.label;
