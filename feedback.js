@@ -189,4 +189,81 @@
        const ok = await confirmDialog({ title, message, confirmText, cancelText, tone, icon, warnings, requireText })
        tone: 'danger' | 'warning' | 'info'   icon: 'trash' | 'logout' | 'warning' | 'info'
        warnings:    optional list of short warning lines shown in a highlighted box
-       requireText: optional text the user must type exactly before the confirm button unlocks */
+       requireText: optional text the user must type exactly before the confirm button unlocks */
+    window.confirmDialog = function ({ title, message, confirmText = 'Confirm', cancelText = 'Cancel', tone = 'danger', icon = 'warning', warnings = [], requireText = '' } = {}) {
+        return new Promise(resolve => {
+            const previous = document.activeElement;
+            const id = ++uid;
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay confirm-overlay';
+            overlay.innerHTML = `
+                <div class="glass-card modal-card confirm-card confirm-${tone} ${warnings.length || requireText ? 'has-extras' : ''}" role="alertdialog" aria-modal="true"
+                     aria-labelledby="confirm-title-${id}" aria-describedby="confirm-desc-${id}">
+                    <span class="confirm-icon">${svg(icon)}</span>
+                    <h3 id="confirm-title-${id}"></h3>
+                    <p id="confirm-desc-${id}"></p>
+                    ${warnings.length ? `<div class="confirm-warnbox" role="note"><span class="confirm-warn-icon">${svg('warning')}</span><ul></ul></div>` : ''}
+                    ${requireText ? `<div class="confirm-verify">
+                        <label for="confirm-input-${id}">Type <strong></strong> to confirm</label>
+                        <input id="confirm-input-${id}" type="text" autocomplete="off" autocapitalize="none" spellcheck="false">
+                        <p class="confirm-verify-hint" aria-live="polite"></p>
+                    </div>` : ''}
+                    <div class="confirm-actions">
+                        <button type="button" class="glass-btn confirm-cancel"></button>
+                        <button type="button" class="glass-btn confirm-ok"></button>
+                    </div>
+                </div>`;
+            overlay.querySelector('h3').textContent = title;
+            overlay.querySelector('p').textContent = message;
+            const cancelBtn = overlay.querySelector('.confirm-cancel');
+            const okBtn = overlay.querySelector('.confirm-ok');
+            cancelBtn.textContent = cancelText;
+            okBtn.textContent = confirmText;
+
+            const list = overlay.querySelector('.confirm-warnbox ul');
+            if (list) warnings.forEach(line => { const li = document.createElement('li'); li.textContent = line; list.appendChild(li); });
+
+            // Type-to-confirm: the confirm button stays locked until the text matches exactly
+            const input = overlay.querySelector('.confirm-verify input');
+            if (input) {
+                const hint = overlay.querySelector('.confirm-verify-hint');
+                overlay.querySelector('.confirm-verify strong').textContent = requireText;
+                okBtn.disabled = true;
+                input.addEventListener('input', () => {
+                    const typed = input.value.trim();
+                    const match = typed === requireText.trim();
+                    okBtn.disabled = !match;
+                    input.classList.toggle('match', match);
+                    input.classList.toggle('mismatch', !!typed && !match);
+                    hint.textContent = !typed ? '' : match ? 'Name matches.' : 'The name does not match yet.';
+                });
+                input.addEventListener('keydown', e => {
+                    if (e.key === 'Enter') { e.preventDefault(); if (!okBtn.disabled) close(true); }
+                });
+            }
+
+            const close = result => {
+                document.removeEventListener('keydown', onKey, true);
+                overlay.remove();
+                if (previous && document.contains(previous)) previous.focus();
+                resolve(result);
+            };
+            const onKey = e => {
+                if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(false); }
+                else if (e.key === 'Tab') {
+                    const items = (input ? [input, cancelBtn, okBtn] : [cancelBtn, okBtn]).filter(el => !el.disabled);
+                    const i = items.indexOf(document.activeElement);
+                    e.preventDefault();
+                    items[(i + (e.shiftKey ? -1 : 1) + items.length) % items.length].focus();
+                }
+            };
+            cancelBtn.addEventListener('click', () => close(false));
+            okBtn.addEventListener('click', () => close(true));
+            overlay.addEventListener('mousedown', e => { if (e.target === overlay) close(false); });
+            document.addEventListener('keydown', onKey, true);
+            document.body.appendChild(overlay);
+            (input || cancelBtn).focus();
+        });
+    };
+
+    /* ---------- 6. INPUTS & DIALOG ACCESSIBILITY ---------- */
