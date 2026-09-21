@@ -266,4 +266,26 @@
         });
     };
 
-    /* ---------- 6. INPUTS & DIALOG ACCESSIBILITY ---------- */
+    /* ---------- 6. INPUTS & DIALOG ACCESSIBILITY ---------- */
+    function enhancePasswordFields() {
+        document.querySelectorAll('input[type="password"]').forEach(input => {
+            if (input.closest('.input-wrap')) return;
+            const wrap = document.createElement('div');
+            wrap.className = 'input-wrap';
+            input.parentNode.insertBefore(wrap, input);
+            wrap.appendChild(input);
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'toggle-visibility';
+            btn.setAttribute('aria-label', 'Show password');
+            btn.innerHTML = svg('eye');
+            btn.addEventListener('click', () => {
+                const show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                btn.innerHTML = svg(show ? 'eyeOff' : 'eye');
+            });
+            wrap.appendChild(btn);
+        });
+    }
+
