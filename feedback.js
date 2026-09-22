@@ -310,4 +310,23 @@
             }
         });
     }
-
+
+    function closeTopDialog() {
+        const open = [...document.querySelectorAll('.modal-overlay:not(.hidden):not(.confirm-overlay)')].pop();
+        if (!open) return;
+        if (open.id === 'not-found-view') window.closeNotFound?.();
+        else window.closeModal?.(open.id);
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTopDialog(); });
+    document.addEventListener('mousedown', e => {
+        if (e.target.classList?.contains('modal-overlay') && !e.target.classList.contains('confirm-overlay')) closeTopDialog();
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => { enhancePasswordFields(); enhanceDialogs(); });
+    } else {
+        enhancePasswordFields();
+        enhanceDialogs();
+    }
+})();
