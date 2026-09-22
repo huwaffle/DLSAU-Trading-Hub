@@ -288,4 +288,26 @@
             wrap.appendChild(btn);
         });
     }
+
+    function enhanceDialogs() {
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            const card = overlay.querySelector('.modal-card');
+            const heading = overlay.querySelector('h3, h4');
+            if (!card) return;
+            card.setAttribute('role', 'dialog');
+            card.setAttribute('aria-modal', 'true');
+            if (heading) {
+                heading.id = heading.id || `dialog-title-${++uid}`;
+                card.setAttribute('aria-labelledby', heading.id);
+            }
+        });
+        document.querySelectorAll('.input-group').forEach(group => {
+            const label = group.querySelector('label');
+            const field = group.querySelector('input, select, textarea');
+            if (label && field) {
+                field.id = field.id || `field-${++uid}`;
+                label.setAttribute('for', field.id);
+            }
+        });
+    }
 
