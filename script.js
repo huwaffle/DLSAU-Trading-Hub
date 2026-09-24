@@ -345,4 +345,36 @@ function subscribeToRealtime() {
         });
 }
 
+// ==========================================================
+// 3. STATE - app-wide variables
+// ==========================================================
+let currentUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.user)) || null;
+
+let products = [];
+let globalChats = [];
+let allRatings = [];
+let activeChatId = null;
+let selectedCategory = 'All';
+let searchQuery = '';
+let currentTargetSeller = null;
+let notifications = null;
+let adminAccounts = [];
+let adminReports = [];
+let adminTab = 'pending';
+let adminSearch = '';
+let wishlist = [];
+
+function wishlistKey() {
+    return `${STORAGE_KEYS.wishlist}:${currentUser ? currentUser.name.toLowerCase() : ''}`;
+}
+
+function loadWishlist() {
+    if (!currentUser) return [];
+    try { return JSON.parse(localStorage.getItem(wishlistKey())) || []; } catch (err) { return []; }
+}
+
+function saveWishlist() {
+    if (currentUser) localStorage.setItem(wishlistKey(), JSON.stringify(wishlist));
+}
+
 // ==========================================================
