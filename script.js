@@ -377,4 +377,20 @@ function saveWishlist() {
     if (currentUser) localStorage.setItem(wishlistKey(), JSON.stringify(wishlist));
 }
 
+// ==========================================================
+// 4. STARTUP - runs when the page loads
+// ==========================================================
+document.addEventListener('DOMContentLoaded', () => {
+    initStorage();
+    if (currentUser) {
+        initUserSession();
+    }
+    setupCategoryListeners();
+    setupSearchListener();
+    setupRouting();
+    renderTeam();
+    setupUploadWizard();
+    setupEditListing();
+});
+
 // ==========================================================
