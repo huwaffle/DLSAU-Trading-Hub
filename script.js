@@ -393,4 +393,40 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEditListing();
 });
 
+// ==========================================================
+// 4. ROUTING - page address and 404 view
+// ==========================================================
+const KNOWN_VIEWS = ['home', 'chat', 'wishlist', 'admin'];
+
+function setupRouting() {
+    window.addEventListener('hashchange', handleRoute);
+    handleRoute();
+}
+
+function handleRoute() {
+    const overlay = document.getElementById('not-found-view');
+    if (!overlay) return;
+
+    const route = location.hash.replace(/^#\/?/, '').toLowerCase();
+
+    if (!route || route.includes('=')) {
+        overlay.classList.add('hidden');
+        return;
+    }
+
+    if (KNOWN_VIEWS.includes(route)) {
+        overlay.classList.add('hidden');
+        if (currentUser && (route !== 'admin' || currentUser.role === 'Admin')) switchMainTab(route);
+    } else {
+        overlay.classList.remove('hidden');
+    }
+}
+
+function closeNotFound() {
+    history.replaceState(null, '', location.pathname + location.search);
+    document.getElementById('not-found-view').classList.add('hidden');
+}
+
+// UI FEEDBACK: showToast, validateForm and failForm live in feedback.js
+
 // ==========================================================
