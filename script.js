@@ -429,4 +429,17 @@ function closeNotFound() {
 
 // UI FEEDBACK: showToast, validateForm and failForm live in feedback.js
 
+// ==========================================================
+// 5. STORAGE SETUP - one-time cleanup of the old local data
+//    (products, chats and ratings now live in Supabase)
+// ==========================================================
+const LEGACY_LOCAL_KEYS = [
+    'dlsau_products', 'dlsau_chats', 'dlsau_ratings',
+    'dlsau_categories_v2', 'dlsau_samples_removed', 'dlsau_wishlist'
+];
+
+function initStorage() {
+    LEGACY_LOCAL_KEYS.forEach(key => localStorage.removeItem(key));
+}
+
 // ==========================================================
