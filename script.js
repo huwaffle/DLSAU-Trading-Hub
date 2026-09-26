@@ -491,4 +491,77 @@ async function startDataListeners() {
 }
 
 
+// ==========================================================
+// 6. NAVIGATION - Home / Messages / Wishlist tabs
+// ==========================================================
+function switchMainTab(tabName) {
+    const homeView = document.getElementById('tab-home-view');
+    const chatView = document.getElementById('tab-chat-view');
+    const wishlistView = document.getElementById('tab-wishlist-view');
+    const adminView = document.getElementById('tab-admin-view');
+    
+    const navHome = document.getElementById('nav-home');
+    const navChat = document.getElementById('nav-chat');
+    const navWishlist = document.getElementById('nav-wishlist');
+    
+    const mobNavHome = document.getElementById('mob-nav-home');
+    const mobNavChat = document.getElementById('mob-nav-chat');
+    const mobNavWishlist = document.getElementById('mob-nav-wishlist');
+
+    homeView.classList.add('hidden');
+    chatView.classList.add('hidden');
+    wishlistView.classList.add('hidden');
+    adminView.classList.add('hidden');
+    document.getElementById('mob-nav-admin')?.classList.remove('active');
+    document.getElementById('admin-badge-btn')?.classList.remove('active-tab');
+    if (tabName === 'admin' && (!currentUser || currentUser.role !== 'Admin')) tabName = 'home';
+    else if (isAdminUser()) tabName = 'admin';
+    
+    navHome.classList.remove('active');
+    navChat.classList.remove('active');
+    navWishlist.classList.remove('active');
+    
+    mobNavHome?.classList.remove('active');
+    mobNavChat?.classList.remove('active');
+    mobNavWishlist?.classList.remove('active');
+
+    if (tabName === 'home') {
+        homeView.classList.remove('hidden');
+        navHome.classList.add('active');
+        mobNavHome?.classList.add('active');
+    } else if (tabName === 'chat') {
+        chatView.classList.remove('hidden');
+        navChat.classList.add('active');
+        mobNavChat?.classList.add('active');
+        
+        const userChats = getUserChats();
+        const activeExists = userChats.some(c => c.id === activeChatId);
+        
+        if (!activeExists && userChats.length > 0) {
+            activeChatId = userChats[0].id;
+        } else if (userChats.length === 0) {
+            activeChatId = null;
+        }
+
+        renderChatThreads();
+        if (activeChatId) {
+            selectChatThread(activeChatId);
+        } else {
+            document.getElementById('chat-empty-view').classList.remove('hidden');
+            document.getElementById('chat-active-view').classList.add('hidden');
+        }
+    } else if (tabName === 'admin') {
+        adminView.classList.remove('hidden');
+        document.getElementById('mob-nav-admin')?.classList.add('active');
+        document.getElementById('admin-badge-btn')?.classList.add('active-tab');
+        loadAdminData();
+        renderAdmin();
+    } else if (tabName === 'wishlist') {
+        wishlistView.classList.remove('hidden');
+        navWishlist.classList.add('active');
+        mobNavWishlist?.classList.add('active');
+        renderWishlist();
+    }
+}
+
 // ==========================================================
