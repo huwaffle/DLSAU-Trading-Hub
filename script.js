@@ -442,4 +442,53 @@ function initStorage() {
     LEGACY_LOCAL_KEYS.forEach(key => localStorage.removeItem(key));
 }
 
+// ==========================================================
+// 4. STARTUP - load saved data from Supabase
+// ==========================================================
+// Green progress bar at the very top of the page while data loads after sign-in
+let progressTimer = null;
+function startTopProgress() {
+    const bar = document.getElementById('top-progress');
+    const fill = document.getElementById('top-progress-fill');
+    clearInterval(progressTimer);
+    bar.classList.remove('hidden', 'done');
+    let pct = 8;
+    fill.style.width = pct + '%';
+    progressTimer = setInterval(() => {
+        pct += (90 - pct) * 0.12;
+        fill.style.width = pct + '%';
+    }, 180);
+}
+
+function finishTopProgress() {
+    const bar = document.getElementById('top-progress');
+    clearInterval(progressTimer);
+    document.getElementById('top-progress-fill').style.width = '100%';
+    bar.classList.add('done');
+    setTimeout(() => { bar.classList.add('hidden'); bar.classList.remove('done'); }, 450);
+}
+
+function skeletonCards(n) {
+    return Array.from({ length: n }, () => `
+        <div class="glass-card card skeleton-card" aria-hidden="true">
+            <div class="skeleton sk-img"></div>
+            <div class="skeleton sk-line w70"></div>
+            <div class="skeleton sk-line"></div>
+            <div class="skeleton sk-line w50"></div>
+            <div class="skeleton sk-btn"></div>
+        </div>`).join('');
+}
+
+async function startDataListeners() {
+    showLoadingState();
+    startTopProgress();
+    subscribeToRealtime();
+    try {
+        await Promise.all([loadProducts(), loadChats(), loadRatings(), loadNotifications(), loadAdminData()]);
+    } finally {
+        finishTopProgress();
+    }
+}
+
+
 // ==========================================================
