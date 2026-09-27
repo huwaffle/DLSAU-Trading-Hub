@@ -564,4 +564,27 @@ function switchMainTab(tabName) {
     }
 }
 
+// ==========================================================
+// 6. NAVIGATION - categories and search
+// ==========================================================
+function setupCategoryListeners() {
+    const items = document.querySelectorAll('#category-filter-list .category-item');
+    items.forEach(item => {
+        item.addEventListener('click', () => {
+            items.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            selectedCategory = item.getAttribute('data-category');
+            document.getElementById('current-category-title').innerText = selectedCategory === 'All' ? 'Market Listings' : `${selectedCategory} Listings`;
+            renderProducts();
+        });
+    });
+}
+
+function setupSearchListener() {
+    document.getElementById('search-input')?.addEventListener('input', (e) => {
+        searchQuery = e.target.value.toLowerCase().trim();
+        renderProducts();
+    });
+}
+
 // ==========================================================
