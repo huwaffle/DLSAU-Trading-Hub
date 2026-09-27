@@ -587,4 +587,369 @@ function setupSearchListener() {
     });
 }
 
+// ==========================================================
+// 7. AUTHENTICATION - login, register, forgot, logout
+// ==========================================================
+const AUTH_ORDER = ['login', 'register', 'forgot'];
+
+function switchAuthTab(tab) {
+    document.querySelectorAll('.auth-card form').forEach(clearFormErrors);
+    const forms = {
+        login: document.getElementById('login-form'),
+        register: document.getElementById('register-form'),
+        forgot: document.getElementById('forgot-form')
+    };
+    const tabsContainer = document.getElementById('auth-tabs-container');
+    const tabs = document.querySelectorAll('.tab-btn');
+    const card = document.querySelector('.auth-card');
+
+    const current = AUTH_ORDER.find(name => !forms[name].classList.contains('hidden'));
+    const next = forms[tab] ? tab : 'login';
+    card.dataset.view = next;
+
+    // Tab buttons and the sliding pill
+    tabsContainer.style.display = next === 'forgot' ? 'none' : 'flex';
+    tabsContainer.dataset.tab = next;
+    tabs[0].classList.toggle('active', next === 'login');
+    tabs[1].classList.toggle('active', next === 'register');
+
+    const showOnly = name => AUTH_ORDER.forEach(n => forms[n].classList.toggle('hidden', n !== name));
+
+    const animate = current && current !== next
+        && !document.getElementById('auth-overlay').classList.contains('hidden')
+        && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!animate) {
+        showOnly(next);
+        return;
+    }
+
+    // Slide direction: forward (login -> create account) moves left, backward moves right
+    const dir = AUTH_ORDER.indexOf(next) > AUTH_ORDER.indexOf(current) ? 1 : -1;
+    const ease = 'cubic-bezier(0.22, 0.61, 0.36, 1)';
+    const oldForm = forms[current];
+    const newForm = forms[next];
+    const startHeight = card.offsetHeight;
+
+    authSwitchToken = (authSwitchToken || 0) + 1;
+    const token = authSwitchToken;
+    card.style.pointerEvents = 'none';
+
+    oldForm.animate(
+        [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: `translateX(${-24 * dir}px)` }],
+        { duration: 160, easing: 'ease-in', fill: 'forwards' }
+    ).finished.then(() => {
+        if (token !== authSwitchToken) return;
+        showOnly(next);
+        oldForm.getAnimations().forEach(a => a.cancel());
+        const endHeight = card.offsetHeight;
+
+        card.style.overflow = 'hidden';
+        card.animate([{ height: startHeight + 'px' }, { height: endHeight + 'px' }], { duration: 280, easing: ease })
+            .finished.finally(() => { card.style.overflow = ''; card.style.pointerEvents = ''; });
+        newForm.animate(
+            [{ opacity: 0, transform: `translateX(${24 * dir}px)` }, { opacity: 1, transform: 'translateX(0)' }],
+            { duration: 280, easing: ease }
+        );
+    }).catch(() => { showOnly(next); card.style.pointerEvents = ''; });
+}
+let authSwitchToken = 0;
+
+// Accounts created with "Create Account" (username, email, password) are remembered in
+// this browser so the same person can log in with their username or their email.
+// Passwords are stored as a salted SHA-256 hash, never as plain text.
+// Note: account.name holds the username, which is the name shown across the app.
+const ACCOUNTS_KEY = 'dlsau_accounts';
+const ADMIN_LOGIN = { username: 'admin', password: 'admin' };
+
+function loadAccounts() {
+    try { return JSON.parse(localStorage.getItem(ACCOUNTS_KEY)) || []; } catch (err) { return []; }
+}
+
+function saveAccounts(accounts) {
+    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+}
+
+async function hashPassword(password, salt) {
+    const text = `${salt.toLowerCase()}::${password}`;
+    if (!window.crypto || !crypto.subtle) return 'plain:' + btoa(unescape(encodeURIComponent(text)));
+    const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(bytes)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Accounts live in Supabase (so the admin can manage them). Accounts that were created
+// earlier in this browser are copied up the first time they are seen. If the table is
+// not available the app falls back to this browser's local list.
+async function getAccounts() {
+    const local = loadAccounts();
+    const { data, error } = await db.from('accounts').select('*');
+    if (error) {
+        console.error('Supabase accounts error:', error);
+        return { list: local, remote: false };
+    }
+    const list = (data || []).map(rowToAccount);
+    const missing = local.filter(a => !list.some(r => r.email.toLowerCase() === a.email.toLowerCase() || r.name.toLowerCase() === a.name.toLowerCase()));
+    if (missing.length) {
+        const { data: added } = await db.from('accounts').insert(missing.map(a => ({ name: a.name, email: a.email, pass_hash: a.passHash, recovery_hash: a.recoveryHash || null }))).select();
+        (added || []).forEach(r => list.push(rowToAccount(r)));
+    }
+    return { list, remote: true };
+}
+
+function findAccount(list, identifier) {
+    const id = identifier.trim().toLowerCase();
+    return list.find(a =>
+        a.email.toLowerCase() === id ||
+        a.name.toLowerCase() === id
+    );
+}
+
+function initialsOf(name) {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    const letters = parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : name.trim().substring(0, 2);
+    return (letters || 'US').toUpperCase();
+}
+
+function startSession(user) {
+    currentUser = user;
+    localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(currentUser));
+    initUserSession();
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const form = e.target;
+    const identifier = document.getElementById('login-email').value.trim();
+    const pass = document.getElementById('login-password').value.trim();
+
+    if (!validateForm(form, [
+        ['login-email', v => v ? '' : MESSAGES.val.loginEmail],
+        ['login-password', v => v ? '' : MESSAGES.val.loginPassword]
+    ])) return;
+
+    const btn = form.querySelector('button[type="submit"]');
+    setButtonLoading(btn, true, MESSAGES.loading.signingIn);
+
+    // Only the built-in admin and accounts created with "Create Account" can sign in
+    const { list } = await getAccounts();
+    const account = findAccount(list, identifier);
+    let user = null;
+    let failField = 'login-password';
+    let failMessage = MESSAGES.val.loginInvalid;
+
+    if (account) {
+        const hash = await hashPassword(pass, account.email);
+        if (hash === account.passHash && account.suspended) {
+            setButtonLoading(btn, false);
+            failForm(form, 'login-email', MESSAGES.accountSuspended);
+            showToast(MESSAGES.accountSuspended, 'error');
+            return;
+        }
+        if (hash === account.passHash) {
+            user = { name: account.name, email: account.email, role: 'Member', initials: initialsOf(account.name) };
+        }
+    } else if (identifier.toLowerCase() === ADMIN_LOGIN.username && pass === ADMIN_LOGIN.password) {
+        user = { name: 'Admin', email: identifier, role: 'Admin', initials: 'AD' };
+    } else {
+        failField = 'login-email';
+        failMessage = MESSAGES.val.loginNoAccount;
+    }
+
+    setButtonLoading(btn, false);
+    if (!user) {
+        failForm(form, failField, failMessage);
+        showToast(MESSAGES.loginFailed, 'error');
+        return;
+    }
+    startSession(user);
+}
+
+let pendingRegistration = null;
+let pendingSessionUser = null;
+
+async function handleRegister(e) {
+    e.preventDefault();
+    const form = e.target;
+    const name = document.getElementById('reg-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value.trim();
+
+    if (!validateForm(form, [
+        ['reg-name', v => !v ? MESSAGES.val.regName : /^[A-Za-z0-9._]{3,20}$/.test(v) ? '' : MESSAGES.val.regNameInvalid],
+        ['reg-email', v => !v ? MESSAGES.val.regEmailEmpty : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? '' : MESSAGES.val.regEmailInvalid],
+        ['reg-password', v => !v ? MESSAGES.val.regPasswordEmpty : v.length < 6 ? MESSAGES.val.regPasswordShort : '']
+    ])) return;
+
+    pendingRegistration = { form, name, email, password };
+    openLegal('terms', true);
+}
+
+// Random recovery code, shown once when the account is created (used to reset a forgotten password)
+function makeRecoveryCode() {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const bytes = crypto.getRandomValues(new Uint8Array(10));
+    const code = Array.from(bytes, b => alphabet[b % alphabet.length]).join('');
+    return `${code.slice(0, 5)}-${code.slice(5)}`;
+}
+
+const recoveryHashOf = (code, email) => hashPassword(code.replace(/[\s-]/g, '').toUpperCase(), `recovery:${email}`);
+
+async function createAccount({ form, name, email, password }) {
+    const btn = form.querySelector('button[type="submit"]');
+    setButtonLoading(btn, true, MESSAGES.loading.creating);
+
+    const { list: accounts, remote } = await getAccounts();
+    if (accounts.some(a => a.email.toLowerCase() === email.toLowerCase())) {
+        setButtonLoading(btn, false);
+        failForm(form, 'reg-email', MESSAGES.val.regEmailTaken);
+        return;
+    }
+    if (accounts.some(a => a.name.toLowerCase() === name.toLowerCase()) || name.toLowerCase() === 'admin') {
+        setButtonLoading(btn, false);
+        failForm(form, 'reg-name', MESSAGES.val.regNameTaken);
+        return;
+    }
+
+    const passHash = await hashPassword(password, email);
+    const code = makeRecoveryCode();
+    const recoveryHash = await recoveryHashOf(code, email);
+
+    if (remote) {
+        const { error } = await db.from('accounts').insert({ name, email, pass_hash: passHash, recovery_hash: recoveryHash });
+        if (error) {
+            setButtonLoading(btn, false);
+            showToast(MESSAGES.saveFailed(error.message), 'error');
+            return;
+        }
+    } else {
+        const local = loadAccounts();
+        local.push({ name, email, passHash, recoveryHash });
+        saveAccounts(local);
+    }
+    setButtonLoading(btn, false);
+
+    form.reset();
+    pendingSessionUser = { name, email, role: 'Member', initials: initialsOf(name) };
+    document.getElementById('recovery-code').textContent = code;
+    openModal('recovery-modal');
+}
+
+function copyRecoveryCode() {
+    const code = document.getElementById('recovery-code').textContent;
+    navigator.clipboard?.writeText(code).then(() => showToast('Recovery code copied.', 'success'), () => {});
+}
+
+function continueAfterRecovery() {
+    closeModal('recovery-modal');
+    document.getElementById('recovery-code').textContent = '';
+    if (!pendingSessionUser) return;
+    const user = pendingSessionUser;
+    pendingSessionUser = null;
+    startSession(user);
+    showToast(MESSAGES.accountCreated);
+}
+
+// Forgot password: username/email + recovery code + new password (no email needed)
+async function handleForgotPassword(e) {
+    e.preventDefault();
+    const form = e.target;
+    const identifier = document.getElementById('forgot-email').value.trim();
+    const code = document.getElementById('forgot-code').value.trim();
+    const pass = document.getElementById('forgot-password').value.trim();
+
+    if (!validateForm(form, [
+        ['forgot-email', v => v ? '' : MESSAGES.val.forgotEmail],
+        ['forgot-code', v => v ? '' : MESSAGES.val.recoveryEmpty],
+        ['forgot-password', v => !v ? MESSAGES.val.regPasswordEmpty : v.length < 6 ? MESSAGES.val.regPasswordShort : ''],
+        ['forgot-confirm', v => v === pass ? '' : MESSAGES.val.passwordMismatch]
+    ])) return;
+
+    const btn = form.querySelector('button[type="submit"]');
+    setButtonLoading(btn, true, MESSAGES.loading.saving);
+    const { list, remote } = await getAccounts();
+    const account = findAccount(list, identifier);
+    const valid = account && account.recoveryHash && await recoveryHashOf(code, account.email) === account.recoveryHash;
+    if (!valid) {
+        setButtonLoading(btn, false);
+        failForm(form, 'forgot-code', MESSAGES.val.recoveryWrong);
+        return;
+    }
+
+    const passHash = await hashPassword(pass, account.email);
+    if (remote) {
+        const { error } = await db.from('accounts').update({ pass_hash: passHash }).eq('id', account.id);
+        if (error) {
+            setButtonLoading(btn, false);
+            showToast(MESSAGES.saveFailed(error.message), 'error');
+            return;
+        }
+    } else {
+        saveAccounts(loadAccounts().map(a => a.email.toLowerCase() === account.email.toLowerCase() ? { ...a, passHash } : a));
+    }
+    setButtonLoading(btn, false);
+    form.reset();
+    switchAuthTab('login');
+    showToast(MESSAGES.passwordChanged, 'success');
+}
+
+function initUserSession() {
+    wishlist = loadWishlist();
+    document.getElementById('auth-overlay').classList.add('hidden');
+    document.getElementById('app-layout').classList.remove('hidden');
+
+    document.getElementById('user-avatar').innerText = currentUser.initials;
+    document.getElementById('prof-avatar').innerText = currentUser.initials;
+    document.getElementById('user-display-name').innerText = currentUser.name;
+    document.getElementById('prof-name').innerText = currentUser.name;
+    document.getElementById('prof-email').innerText = currentUser.email;
+    document.getElementById('user-role-label').innerText = currentUser.role;
+
+    const admin = currentUser.role === 'Admin';
+    document.getElementById('admin-badge-btn').style.display = admin ? 'inline-flex' : 'none';
+    document.getElementById('mob-nav-admin')?.classList.toggle('hidden', !admin);
+    document.getElementById('notif-btn').classList.toggle('hidden', admin);
+    notifications = null;
+    renderNotifications();
+    document.getElementById('app-layout').classList.toggle('admin-mode', admin);
+    if (admin) switchMainTab('admin');
+
+    activeChatId = null;
+    showToast(MESSAGES.welcome(currentUser.name));
+    startDataListeners();
+}
+
+async function handleLogout() {
+    const ok = await confirmDialog({
+        title: MESSAGES.confirm.logoutTitle,
+        message: MESSAGES.confirm.logoutBody,
+        confirmText: MESSAGES.confirm.logoutYes,
+        cancelText: MESSAGES.confirm.cancel,
+        tone: 'warning',
+        icon: 'logout'
+    });
+    if (!ok) return;
+    currentUser = null;
+    wishlist = [];
+    activeChatId = null;
+    prevUnread = null;
+    paintUnreadBadges(0);
+    document.getElementById('app-layout').classList.remove('admin-mode');
+    currentTargetSeller = null;
+    notifications = null;
+    adminAccounts = [];
+    adminReports = [];
+    localStorage.removeItem(STORAGE_KEYS.user);
+
+    document.getElementById('auth-overlay').classList.remove('hidden');
+    document.getElementById('app-layout').classList.add('hidden');
+    
+    document.getElementById('login-form').reset();
+    document.getElementById('register-form').reset();
+    document.getElementById('forgot-form').reset();
+    switchAuthTab('login');
+
+    switchMainTab('home');
+    closeModal('profile-modal');
+    closeModal('seller-profile-modal');
+}
+
 // ==========================================================
