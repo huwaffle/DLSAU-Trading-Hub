@@ -952,4 +952,80 @@ async function handleLogout() {
     closeModal('seller-profile-modal');
 }
 
+// ==========================================================
+// 8. RATINGS & PROFILES - account ratings and reviews
+//    Ratings are stored per account name: { targetUser, ratedBy, rating 1-5, comment, updatedAt }
+//    Each account can rate another account once (and edit or remove it later).
+// ==========================================================
+const STAR_PATH = '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>';
+
+function starSVG(filled, size = 16) {
+    return `<svg class="star ${filled ? 'filled' : ''}" viewBox="0 0 24 24" width="${size}" height="${size}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${STAR_PATH}</svg>`;
+}
+
+function starRowHTML(value, size = 16) {
+    return Array.from({ length: 5 }, (_, i) => starSVG(i < Math.round(value), size)).join('');
+}
+
+function getUserRatingStats(username) {
+    const list = allRatings.filter(r => r.targetUser === username);
+    const counts = [0, 0, 0, 0, 0];
+    list.forEach(r => { counts[r.rating - 1]++; });
+    const sum = list.reduce((acc, r) => acc + r.rating, 0);
+    return {
+        average: list.length ? parseFloat((sum / list.length).toFixed(1)) : 0,
+        count: list.length,
+        counts,
+        list: [...list].sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
+    };
+}
+
+function renderRatingSummary(container, stats) {
+    const bars = [5, 4, 3, 2, 1].map(n => {
+        const pct = stats.count ? Math.round((stats.counts[n - 1] / stats.count) * 100) : 0;
+        return `<div class="bar-row"><span>${n}</span>${starSVG(true, 11)}<div class="bar" role="img" aria-label="${stats.counts[n - 1]} ratings with ${n} stars"><span style="width:${pct}%"></span></div><em>${stats.counts[n - 1]}</em></div>`;
+    }).join('');
+    container.innerHTML = `
+        <div class="summary-score">
+            <strong>${stats.count ? stats.average.toFixed(1) : '--'}</strong>
+            <div class="summary-stars" aria-hidden="true">${starRowHTML(stats.average, 16)}</div>
+            <span class="summary-count">${stats.count ? `${stats.count} ${stats.count === 1 ? 'rating' : 'ratings'}` : MESSAGES.noRatings}</span>
+        </div>
+        <div class="summary-bars">${bars}</div>`;
+    container.setAttribute('aria-label', stats.count ? `Average ${stats.average.toFixed(1)} out of 5 from ${stats.count} ratings` : MESSAGES.noRatings);
+}
+
+function renderReviewList(listEl, stats, highlightUser) {
+    listEl.innerHTML = '';
+    const reviews = stats.list.filter(r => r.comment).slice(0, 5);
+    if (!reviews.length) {
+        const li = document.createElement('li');
+        li.className = 'review-empty';
+        li.textContent = MESSAGES.noReviews;
+        listEl.appendChild(li);
+        return;
+    }
+    reviews.forEach(r => {
+        const li = document.createElement('li');
+        li.className = 'review-item';
+        li.innerHTML = '<div class="review-top"><strong class="review-name"></strong><span class="review-stars" aria-hidden="true"></span><time class="review-date"></time></div><p class="review-text"></p>';
+        li.querySelector('.review-name').textContent = r.ratedBy === highlightUser ? `${r.ratedBy} (You)` : r.ratedBy;
+        li.querySelector('.review-stars').innerHTML = starRowHTML(r.rating, 12);
+        const time = li.querySelector('.review-date');
+        time.textContent = r.updatedAt ? new Date(r.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+        if (r.updatedAt) time.dateTime = r.updatedAt;
+        li.querySelector('.review-text').textContent = r.comment;
+        listEl.appendChild(li);
+    });
+}
+
+function updateMyProfileRatingDisplay() {
+    if (!currentUser) return;
+    const stats = getUserRatingStats(currentUser.name);
+    renderRatingSummary(document.getElementById('my-rating-summary'), stats);
+    renderReviewList(document.getElementById('my-reviews'), stats, currentUser.name);
+    const roleLabel = document.getElementById('user-role-label');
+    if (roleLabel) roleLabel.textContent = stats.count ? `${currentUser.role} \u00b7 ${stats.average.toFixed(1)} \u2605` : currentUser.role;
+}
+
 // ==========================================================
