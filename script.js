@@ -1028,4 +1028,141 @@ function updateMyProfileRatingDisplay() {
     if (roleLabel) roleLabel.textContent = stats.count ? `${currentUser.role} \u00b7 ${stats.average.toFixed(1)} \u2605` : currentUser.role;
 }
 
+// ==========================================================
+// 8. RATINGS & PROFILES - seller profile window and rating form
+// ==========================================================
+let pendingScore = 0;
+
+function openSellerProfile(sellerName) {
+    if (isAdminUser()) return;
+    if (currentUser && sellerName === currentUser.name) {
+        openModal('profile-modal');
+        return;
+    }
+
+    currentTargetSeller = sellerName;
+    const initials = sellerName ? sellerName.substring(0, 2).toUpperCase() : "SL";
+
+    document.getElementById('seller-prof-avatar').innerText = initials;
+    document.getElementById('seller-prof-name').innerText = sellerName;
+    clearFormErrors(document.getElementById('rate-form'));
+
+    renderSellerModalRating(sellerName);
+    openModal('seller-profile-modal');
+}
+
+function openSellerProfileFromChat() {
+    if (!activeChatId) return;
+    const chat = globalChats.find(c => c.id === activeChatId);
+    if (!chat) return;
+
+    const isBuyer = chat.buyerName === currentUser.name;
+    const partnerName = isBuyer ? chat.sellerName : chat.buyerName;
+    openSellerProfile(partnerName);
+}
+
+function buildStarInput() {
+    const group = document.getElementById('star-input');
+    if (!group || group.children.length) return;
+    for (let n = 1; n <= 5; n++) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'star-btn';
+        btn.setAttribute('role', 'radio');
+        btn.setAttribute('aria-label', `${n} ${n === 1 ? 'star' : 'stars'}`);
+        btn.dataset.value = n;
+        btn.innerHTML = starSVG(false, 28);
+        btn.addEventListener('click', () => setPendingScore(n));
+        btn.addEventListener('mouseenter', () => paintStarInput(n));
+        btn.addEventListener('focus', () => paintStarInput(n));
+        btn.addEventListener('keydown', e => {
+            const move = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[e.key];
+            if (!move) return;
+            e.preventDefault();
+            const next = Math.min(5, Math.max(1, (pendingScore || n) + move));
+            setPendingScore(next);
+            group.children[next - 1].focus();
+        });
+        group.appendChild(btn);
+    }
+    group.addEventListener('mouseleave', () => paintStarInput(pendingScore));
+    group.addEventListener('focusout', () => paintStarInput(pendingScore));
+}
+
+function paintStarInput(upTo) {
+    [...document.getElementById('star-input').children].forEach((btn, i) => {
+        btn.firstElementChild.classList.toggle('filled', i < upTo);
+    });
+}
+
+function setPendingScore(score) {
+    pendingScore = score;
+    const group = document.getElementById('star-input');
+    clearFormErrors(document.getElementById('rate-form'));
+    [...group.children].forEach((btn, i) => {
+        btn.setAttribute('aria-checked', String(i + 1 === score));
+        btn.tabIndex = (score ? i + 1 === score : i === 0) ? 0 : -1;
+    });
+    paintStarInput(score);
+}
+
+function renderSellerModalRating(sellerName) {
+    buildStarInput();
+    const stats = getUserRatingStats(sellerName);
+    renderRatingSummary(document.getElementById('seller-rating-summary'), stats);
+    renderReviewList(document.getElementById('seller-reviews'), stats, currentUser && currentUser.name);
+
+    const mine = currentUser && allRatings.find(r => r.targetUser === sellerName && r.ratedBy === currentUser.name);
+    setPendingScore(mine ? mine.rating : 0);
+    const comment = document.getElementById('rate-comment');
+    comment.value = mine && mine.comment ? mine.comment : '';
+    document.getElementById('rate-comment-count').textContent = comment.value.length;
+    document.getElementById('rate-submit-btn').textContent = mine ? 'Update rating' : 'Submit rating';
+    document.getElementById('rate-remove-btn').classList.toggle('hidden', !mine);
+}
+
+// Saves (or updates) the current user's rating of another account. Returns true on success.
+async function saveRating(target, score, comment) {
+    if (isAdminUser()) return false;
+    const existing = allRatings.find(r => r.targetUser === target && r.ratedBy === currentUser.name);
+    const now = new Date().toISOString();
+
+    // One rating per account pair - the unique key in the database enforces it
+    const { error } = await db.from('ratings').upsert({
+        target_user: target,
+        rated_by: currentUser.name,
+        rating: score,
+        comment: comment || null,
+        updated_at: now
+    }, { onConflict: 'target_user,rated_by' });
+
+    if (error) {
+        showToast(MESSAGES.saveFailed(error.message), 'error');
+        return false;
+    }
+
+    if (existing) {
+        existing.rating = score;
+        existing.comment = comment;
+        existing.updatedAt = now;
+    } else {
+        allRatings.push({
+            id: generateId(),
+            targetUser: target,
+            ratedBy: currentUser.name,
+            rating: score,
+            comment: comment,
+            updatedAt: now
+        });
+    }
+
+    showToast(existing ? MESSAGES.ratingUpdated(target, score) : MESSAGES.rated(target, score), 'success');
+    if (target === currentTargetSeller) renderSellerModalRating(target);
+    updateMyProfileRatingDisplay();
+    renderProducts();
+    renderWishlist();
+    refreshChatRatePanel();
+    return true;
+}
+
 // ==========================================================
