@@ -1165,4 +1165,206 @@ async function saveRating(target, score, comment) {
     return true;
 }
 
+// ==========================================================
+// 10. CHAT - quick rating of the person you are chatting with
+//     Button + popover in the chat header. Uses the same saveRating() as the profile popup.
+// ==========================================================
+let pendingChatScore = 0;
+
+function getChatPartnerName() {
+    const chat = globalChats.find(c => c.id === activeChatId);
+    if (!chat || !currentUser) return null;
+    return chat.buyerName === currentUser.name ? chat.sellerName : chat.buyerName;
+}
+
+function getChatPartnerRole() {
+    const chat = globalChats.find(c => c.id === activeChatId);
+    if (!chat || !currentUser) return 'user';
+    return chat.buyerName === currentUser.name ? 'seller' : 'buyer';
+}
+
+function paintChatStars(upTo) {
+    [...document.getElementById('chat-star-input').children].forEach((btn, i) => {
+        btn.firstElementChild.classList.toggle('filled', i < upTo);
+    });
+}
+
+function setChatScore(score) {
+    pendingChatScore = score;
+    document.getElementById('chat-rate-error').classList.add('hidden');
+    [...document.getElementById('chat-star-input').children].forEach((btn, i) => {
+        btn.setAttribute('aria-checked', String(i + 1 === score));
+        btn.tabIndex = (score ? i + 1 === score : i === 0) ? 0 : -1;
+    });
+    paintChatStars(score);
+}
+
+function buildChatStarInput() {
+    const group = document.getElementById('chat-star-input');
+    if (!group || group.children.length) return;
+    for (let n = 1; n <= 5; n++) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'star-btn';
+        btn.setAttribute('role', 'radio');
+        btn.setAttribute('aria-label', `${n} ${n === 1 ? 'star' : 'stars'}`);
+        btn.innerHTML = starSVG(false, 28);
+        btn.addEventListener('click', () => setChatScore(n));
+        btn.addEventListener('mouseenter', () => paintChatStars(n));
+        btn.addEventListener('focus', () => paintChatStars(n));
+        btn.addEventListener('keydown', e => {
+            const move = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[e.key];
+            if (!move) return;
+            e.preventDefault();
+            const next = Math.min(5, Math.max(1, (pendingChatScore || n) + move));
+            setChatScore(next);
+            group.children[next - 1].focus();
+        });
+        group.appendChild(btn);
+    }
+    group.addEventListener('mouseleave', () => paintChatStars(pendingChatScore));
+    group.addEventListener('focusout', () => paintChatStars(pendingChatScore));
+}
+
+// Keeps the header button label and the popover text in sync with the ratings data
+function refreshChatRatePanel() {
+    const btn = document.getElementById('chat-rate-btn');
+    const partner = getChatPartnerName();
+    if (!btn || !partner) return;
+
+    const stats = getUserRatingStats(partner);
+    const mine = allRatings.find(r => r.targetUser === partner && r.ratedBy === currentUser.name);
+
+    btn.classList.toggle('rated', !!mine);
+    document.getElementById('chat-rate-label').textContent = mine ? `Rated ${mine.rating}/5` : `Rate ${getChatPartnerRole()}`;
+    btn.title = stats.count ? `${partner}: ${stats.average.toFixed(1)} average from ${stats.count} ${stats.count === 1 ? 'rating' : 'ratings'}` : `${partner} has no ratings yet`;
+
+    document.getElementById('chat-rate-title').textContent = mine ? `Your rating for ${partner}` : `Rate ${partner}`;
+    document.getElementById('chat-rate-sub').textContent = stats.count
+        ? `${stats.average.toFixed(1)} average from ${stats.count} ${stats.count === 1 ? 'rating' : 'ratings'}`
+        : MESSAGES.noRatings;
+    document.getElementById('chat-rate-submit').textContent = mine ? 'Update rating' : 'Submit rating';
+}
+
+function toggleChatRate(force) {
+    const panel = document.getElementById('chat-rate-panel');
+    const btn = document.getElementById('chat-rate-btn');
+    const open = force !== undefined ? force : panel.classList.contains('hidden');
+    panel.classList.toggle('hidden', !open);
+    btn.setAttribute('aria-expanded', String(open));
+    if (!open) return;
+
+    buildChatStarInput();
+    refreshChatRatePanel();
+    const partner = getChatPartnerName();
+    const mine = partner && allRatings.find(r => r.targetUser === partner && r.ratedBy === currentUser.name);
+    setChatScore(mine ? mine.rating : 0);
+    document.getElementById('chat-rate-comment').value = mine && mine.comment ? mine.comment : '';
+    requestAnimationFrame(() => document.getElementById('chat-star-input').children[(pendingChatScore || 1) - 1].focus());
+}
+
+async function submitChatRating() {
+    const partner = getChatPartnerName();
+    if (!partner) return;
+
+    if (!pendingChatScore) {
+        const error = document.getElementById('chat-rate-error');
+        error.classList.remove('hidden');
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            document.getElementById('chat-rate-panel').animate(
+                [0, -6, 6, -6, 6, -3, 3, 0].map(x => ({ transform: `translateX(${x}px)` })),
+                { duration: 420, easing: 'ease-in-out' }
+            );
+        }
+        document.getElementById('chat-star-input').children[0].focus();
+        return;
+    }
+
+    const btn = document.getElementById('chat-rate-submit');
+    setButtonLoading(btn, true, MESSAGES.loading.sending);
+    const ok = await saveRating(partner, pendingChatScore, document.getElementById('chat-rate-comment').value.trim());
+    setButtonLoading(btn, false);
+    if (ok) toggleChatRate(false);
+}
+
+function viewChatPartnerProfile() {
+    toggleChatRate(false);
+    openSellerProfileFromChat();
+}
+
+document.addEventListener('mousedown', e => {
+    const panel = document.getElementById('chat-rate-panel');
+    if (!panel || panel.classList.contains('hidden')) return;
+    if (!panel.contains(e.target) && !e.target.closest('#chat-rate-btn')) toggleChatRate(false);
+});
+document.addEventListener('keydown', e => {
+    const panel = document.getElementById('chat-rate-panel');
+    if (e.key === 'Escape' && panel && !panel.classList.contains('hidden')) {
+        toggleChatRate(false);
+        document.getElementById('chat-rate-btn').focus();
+    }
+});
+
+async function handleSubmitRating(e) {
+    e.preventDefault();
+    if (!currentUser || !currentTargetSeller) return;
+
+    if (currentTargetSeller === currentUser.name) {
+        showToast(MESSAGES.cannotRateSelf);
+        return;
+    }
+
+    if (!pendingScore) {
+        failForm(e.target, 'star-input', MESSAGES.val.ratingEmpty);
+        document.getElementById('star-input').children[0].focus();
+        return;
+    }
+
+    clearFormErrors(e.target);
+    const comment = document.getElementById('rate-comment').value.trim();
+    const submitBtn = document.getElementById('rate-submit-btn');
+    setButtonLoading(submitBtn, true, MESSAGES.loading.sending);
+    await saveRating(currentTargetSeller, pendingScore, comment);
+    setButtonLoading(submitBtn, false);
+}
+
+async function removeMyRating() {
+    if (!currentUser || !currentTargetSeller) return;
+    const find = () => allRatings.findIndex(r => r.targetUser === currentTargetSeller && r.ratedBy === currentUser.name);
+    if (find() === -1) return;
+
+    const ok = await confirmDialog({
+        title: MESSAGES.confirm.removeRatingTitle,
+        message: MESSAGES.confirm.removeRatingBody(currentTargetSeller),
+        confirmText: MESSAGES.confirm.removeRatingYes,
+        cancelText: MESSAGES.confirm.cancel,
+        tone: 'warning',
+        icon: 'warning'
+    });
+    const index = find();
+    if (!ok || index === -1) return;
+
+    const { error } = await db.from('ratings')
+        .delete()
+        .eq('target_user', currentTargetSeller)
+        .eq('rated_by', currentUser.name);
+
+    if (error) {
+        showToast(MESSAGES.saveFailed(error.message), 'error');
+        return;
+    }
+
+    allRatings.splice(index, 1);
+    showToast(MESSAGES.ratingRemoved(currentTargetSeller), 'info');
+    refreshChatRatePanel();
+    renderSellerModalRating(currentTargetSeller);
+    updateMyProfileRatingDisplay();
+    renderProducts();
+    renderWishlist();
+}
+
+document.addEventListener('input', e => {
+    if (e.target.id === 'rate-comment') document.getElementById('rate-comment-count').textContent = e.target.value.length;
+});
+
 // ==========================================================
