@@ -1367,4 +1367,107 @@ document.addEventListener('input', e => {
     if (e.target.id === 'rate-comment') document.getElementById('rate-comment-count').textContent = e.target.value.length;
 });
 
+// ==========================================================
+// 9. PRODUCTS - listing cards on the Home tab
+// ==========================================================
+const isAdminUser = () => !!currentUser && currentUser.role === 'Admin';
+const isApproved = p => p.approval === 'approved';
+
+// Everyone sees approved listings. Sellers also see their own pending / rejected ones.
+function visibleProducts() {
+    return products.filter(p => isApproved(p) || (currentUser && p.owner === currentUser.name && !isAdminUser()));
+}
+
+function renderProducts() {
+    const grid = document.getElementById('product-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const listed = visibleProducts();
+    const filtered = listed.filter(p => {
+        if (selectedCategory !== 'All' && p.category !== selectedCategory) return false;
+        if (searchQuery && !p.title.toLowerCase().includes(searchQuery) && !p.owner.toLowerCase().includes(searchQuery)) return false;
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        grid.innerHTML = `
+            <div class="glass-card empty-state">
+                <i data-lucide="package-open"></i>
+                <h4>No Listings Available</h4>
+                <p>${listed.length === 0 ? MESSAGES.emptyMarket : MESSAGES.emptyFilter}</p>
+            </div>
+        `;
+    } else {
+        filtered.forEach(prod => {
+            const card = document.createElement('div');
+            card.className = 'glass-card card';
+            card.dataset.category = prod.category || '';
+            
+            const isAdmin = currentUser && currentUser.role === 'Admin';
+            const isOwnProduct = currentUser && prod.owner === currentUser.name;
+            
+            const canDelete = isAdmin || isOwnProduct;
+            const deleteBtn = canDelete 
+                ? `<button class="glass-btn danger-btn" onclick="deleteProduct('${prod.id}')" style="padding: 4px 8px; font-size: 11px;" title="Delete listing"><i data-lucide="trash"></i></button>` 
+                : '';
+
+            const isSold = prod.status === 'Sold';
+            const isWishlisted = wishlist.includes(prod.id);
+            const sellerStats = getUserRatingStats(prod.owner);
+
+            const editBtn = isOwnProduct
+                ? `<button class="glass-btn" onclick="openEditListing('${prod.id}')" style="padding: 4px 8px; font-size: 11px;" title="Edit listing" aria-label="Edit listing"><i data-lucide="pencil"></i></button>`
+                : '';
+
+            const approved = isApproved(prod);
+            const statusToggleBtn = isOwnProduct && approved
+                ? `<button class="glass-btn" onclick="toggleProductStatus('${prod.id}', '${prod.status || 'Available'}')" style="font-size: 11px; padding: 4px 8px; background: ${isSold ? '#C8E6C9' : '#FFF'};">
+                        ${isSold ? 'Sold' : 'Active'}
+                   </button>`
+                : '';
+
+            const buyButton = isOwnProduct && !approved
+                ? `<button class="glass-btn disabled-btn" disabled>${prod.approval === 'rejected' ? 'Rejected' : 'Pending review'}</button>`
+                : isOwnProduct 
+                ? `<button class="glass-btn primary-btn disabled-btn" disabled title="You cannot buy your own product">
+                        <i data-lucide="tag"></i> Your Item
+                   </button>` 
+                : isSold 
+                ? `<button class="glass-btn disabled-btn" disabled>Sold Out</button>`
+                : `<button class="glass-btn primary-btn" onclick="buyItemAndStartChat('${prod.id}')">
+                        <i data-lucide="message-square"></i> Chat
+                   </button>`;
+
+            card.innerHTML = `
+                <div class="card-img-wrapper">
+                    <img src="${prod.img}" alt="${escapeHTML(prod.title)}" class="card-img">
+                    ${approved ? `<button class="wishlist-btn ${isWishlisted ? 'active' : ''}" aria-label="Toggle wishlist" onclick="toggleWishlist('${prod.id}')">
+                        <i data-lucide="heart"></i>
+                    </button>` : `<span class="approval-badge ${prod.approval}">${prod.approval === 'rejected' ? 'Rejected' : 'Pending review'}</span>`}
+                </div>
+                <div class="card-title">${escapeHTML(prod.title)}</div>
+                <div class="card-desc">${escapeHTML(prod.desc || '')}</div>
+                ${prod.approval === 'rejected' && prod.rejectReason ? `<div class="reject-note">Reason: ${escapeHTML(prod.rejectReason)}. Edit the listing to resubmit it.</div>` : ''}
+                <div class="card-owner" onclick="openSellerProfile('${prod.owner}')">
+                    <i data-lucide="user" style="width: 12px; height: 12px;"></i>
+                    Seller: ${prod.owner}${isOwnProduct ? ' (You)' : ''} <i data-lucide="star" class="inline-star"></i> ${sellerStats.count ? sellerStats.average.toFixed(1) : 'New'} ${isSold ? ' • [SOLD]' : ''}
+                </div>
+                <div class="card-footer">
+                    <div class="card-actions">
+                        ${statusToggleBtn}
+                        ${editBtn}
+                        ${deleteBtn}
+                        ${buyButton}
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    document.getElementById('item-count').innerText = `${filtered.length} Products Available`;
+    lucide.createIcons();
+}
+
 // ==========================================================
