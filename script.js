@@ -1470,4 +1470,89 @@ function renderProducts() {
     lucide.createIcons();
 }
 
+// ==========================================================
+// 9. PRODUCTS - wishlist
+// ==========================================================
+// ==========================================================
+// 9. PRODUCTS - wishlist badge (number on the Wishlist tab = items you saved)
+// ==========================================================
+function updateWishlistBadge(pop = false) {
+    // Count only saved items that still exist (deleted listings drop out)
+    const total = products.filter(p => isApproved(p) && wishlist.includes(p.id)).length;
+    const label = total === 1 ? '1 saved item' : `${total} saved items`;
+    ['wishlist-badge', 'mob-wishlist-badge'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = total > 99 ? '99+' : String(total);
+        el.dataset.count = total;
+        el.classList.toggle('hidden', total === 0);
+        el.setAttribute('aria-label', label);
+        if (pop && total > 0) {
+            el.classList.remove('pop');
+            void el.offsetWidth;
+            el.classList.add('pop');
+        }
+    });
+}
+
+function toggleWishlist(productId) {
+    const index = wishlist.indexOf(productId);
+    if (index > -1) {
+        wishlist.splice(index, 1);
+        showToast(MESSAGES.wishlistRemoved);
+    } else {
+        wishlist.push(productId);
+        showToast(MESSAGES.wishlistAdded);
+    }
+    saveWishlist();
+    renderProducts();
+    renderWishlist();
+    updateWishlistBadge(index === -1);
+}
+
+function renderWishlist() {
+    updateWishlistBadge();
+    const grid = document.getElementById('wishlist-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const wishlistedProds = products.filter(p => isApproved(p) && wishlist.includes(p.id));
+
+    if (wishlistedProds.length === 0) {
+        grid.innerHTML = `
+            <div class="glass-card empty-state">
+                <i data-lucide="heart"></i>
+                <h4>Your Wishlist is Empty</h4>
+                <p>Click the heart icon on any product card to save items for later.</p>
+            </div>
+        `;
+    } else {
+        wishlistedProds.forEach(prod => {
+            const card = document.createElement('div');
+            card.className = 'glass-card card';
+            card.dataset.category = prod.category || '';
+            card.innerHTML = `
+                <div class="card-img-wrapper">
+                    <img src="${prod.img}" alt="${escapeHTML(prod.title)}" class="card-img">
+                    <button class="wishlist-btn active" aria-label="Remove from wishlist" onclick="toggleWishlist('${prod.id}')">
+                        <i data-lucide="heart"></i>
+                    </button>
+                </div>
+                <div class="card-title">${escapeHTML(prod.title)}</div>
+                <div class="card-desc">${escapeHTML(prod.desc || '')}</div>
+                <div class="card-owner" onclick="openSellerProfile('${prod.owner}')">Seller: ${prod.owner}</div>
+                <div class="card-footer">
+                    <button class="glass-btn primary-btn" onclick="buyItemAndStartChat('${prod.id}')">
+                        <i data-lucide="message-square"></i> Chat
+                    </button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    document.getElementById('wishlist-count').innerText = `${wishlistedProds.length} Saved Items`;
+    lucide.createIcons();
+}
+
 // ==========================================================
