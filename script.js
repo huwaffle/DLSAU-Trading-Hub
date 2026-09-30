@@ -1555,4 +1555,156 @@ function renderWishlist() {
     lucide.createIcons();
 }
 
+// ==========================================================
+// 9. PRODUCTS - edit your own listing
+//    Only the seller who posted a listing sees the pencil button and can save changes.
+// ==========================================================
+let editingProductId = null;
+let editPreviewUrl = null;
+
+// Resize a chosen photo to max 800px and return it as a compressed data URL
+function compressImage(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error(MESSAGES.imageReadFailed));
+        reader.onload = event => {
+            const img = new Image();
+            img.onerror = () => reject(new Error(MESSAGES.imageProcessFailed));
+            img.onload = () => {
+                try {
+                    const MAX = 800;
+                    let { width, height } = img;
+                    if (width > height && width > MAX) { height *= MAX / width; width = MAX; }
+                    else if (height >= width && height > MAX) { width *= MAX / height; height = MAX; }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.8));
+                } catch (err) {
+                    resolve(event.target.result);
+                }
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function setEditPhotoPreview(src, title, note) {
+    document.getElementById('edit-preview-img').src = src;
+    document.getElementById('edit-photo-title').textContent = title;
+    document.getElementById('edit-photo-note').textContent = note;
+}
+
+function openEditListing(productId) {
+    const prod = products.find(p => p.id === productId);
+    if (!prod || !currentUser || (prod.owner !== currentUser.name && !isAdminUser())) {
+        showToast(MESSAGES.cannotEditOthers, 'warning');
+        return;
+    }
+    editingProductId = productId;
+    clearFormErrors(document.getElementById('edit-form'));
+
+    document.getElementById('edit-name').value = prod.title;
+    document.getElementById('edit-category').value = prod.category;
+    document.getElementById('edit-desc').value = prod.desc || '';
+    document.getElementById('edit-desc-count').textContent = (prod.desc || '').length;
+    document.getElementById('edit-file').value = '';
+    if (editPreviewUrl) { URL.revokeObjectURL(editPreviewUrl); editPreviewUrl = null; }
+    setEditPhotoPreview(prod.img, 'Current photo', 'Choose a file below to replace it.');
+
+    openModal('edit-modal');
+}
+
+function setupEditListing() {
+    const file = document.getElementById('edit-file');
+    if (!file) return;
+    file.addEventListener('change', () => {
+        const picked = file.files[0];
+        if (editPreviewUrl) { URL.revokeObjectURL(editPreviewUrl); editPreviewUrl = null; }
+        if (picked && picked.type.startsWith('image/')) {
+            editPreviewUrl = URL.createObjectURL(picked);
+            setEditPhotoPreview(editPreviewUrl, 'New photo', picked.name);
+        } else {
+            const prod = products.find(p => p.id === editingProductId);
+            if (prod) setEditPhotoPreview(prod.img, 'Current photo', 'Choose a file below to replace it.');
+        }
+    });
+    document.getElementById('edit-desc').addEventListener('input', e => {
+        document.getElementById('edit-desc-count').textContent = e.target.value.length;
+    });
+}
+
+async function handleEditProduct(e) {
+    e.preventDefault();
+    const form = e.target;
+    const prod = products.find(p => p.id === editingProductId);
+    if (!prod || !currentUser || (prod.owner !== currentUser.name && !isAdminUser())) {
+        showToast(MESSAGES.cannotEditOthers, 'warning');
+        closeModal('edit-modal');
+        return;
+    }
+
+    if (!validateForm(form, [
+        ['edit-name', v => v ? '' : MESSAGES.val.prodName],
+        ['edit-category', v => v ? '' : MESSAGES.val.prodCategory],
+        ['edit-desc', v => v ? '' : MESSAGES.val.prodDesc],
+        ['edit-file', f => f && !f.type.startsWith('image/') ? MESSAGES.val.prodFileType : '']
+    ])) return;
+
+    const title = document.getElementById('edit-name').value.trim();
+    const category = document.getElementById('edit-category').value;
+    const desc = document.getElementById('edit-desc').value.trim();
+    const newFile = document.getElementById('edit-file').files[0];
+
+    if (!newFile && title === prod.title && category === prod.category && desc === (prod.desc || '')) {
+        showToast(MESSAGES.noChanges, 'info');
+        closeModal('edit-modal');
+        return;
+    }
+
+    const btn = document.getElementById('edit-save-btn');
+    setButtonLoading(btn, true, MESSAGES.loading.saving);
+
+    const changes = { title, category, description: desc };
+    const resubmit = !isAdminUser() && prod.approval !== 'pending';
+    if (resubmit) { changes.approval = 'pending'; changes.reject_reason = null; }
+    try {
+        if (newFile) changes.image = await compressImage(newFile);
+    } catch (err) {
+        setButtonLoading(btn, false);
+        showToast(err.message, 'error');
+        return;
+    }
+
+    const { error } = await db.from('products').update(changes).eq('id', prod.id);
+    if (error) {
+        setButtonLoading(btn, false);
+        showToast(MESSAGES.saveFailed(error.message), 'error');
+        return;
+    }
+
+    // Conversations about this item are matched by its title, so keep them in sync
+    if (title !== prod.title) {
+        await db.from('chats').update({ item_title: title }).eq('seller_name', prod.owner).eq('item_title', prod.title);
+        globalChats.forEach(c => { if (c.sellerName === prod.owner && c.itemTitle === prod.title) c.itemTitle = title; });
+    }
+
+    prod.title = title;
+    prod.category = category;
+    prod.desc = desc;
+    if (changes.image) prod.img = changes.image;
+    if (resubmit) { prod.approval = 'pending'; prod.rejectReason = ''; }
+
+    setButtonLoading(btn, false);
+    closeModal('edit-modal');
+    editingProductId = null;
+    showToast(resubmit ? MESSAGES.listingSubmitted : MESSAGES.listingUpdated(title), 'success');
+    if (isAdminUser()) renderAdmin();
+    renderProducts();
+    renderWishlist();
+    if (currentUser) renderChatThreads();
+}
+
 // ==========================================================
