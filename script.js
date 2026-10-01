@@ -1728,4 +1728,293 @@ async function toggleProductStatus(productId, currentStatus) {
     renderWishlist();
 }
 
+// ==========================================================
+// 9. PRODUCTS - sell form (step-by-step wizard with progress)
+//    Edit step names, titles and button labels in UPLOAD_STEPS below.
+// ==========================================================
+const UPLOAD_STEPS = [
+    { name: 'Basics', next: 'Next', checks: () => [
+        ['prod-name', v => v ? '' : MESSAGES.val.prodName],
+        ['prod-category', v => v ? '' : MESSAGES.val.prodCategory]
+    ] },
+    { name: 'Photo', next: 'Next', checks: () => [
+        ['prod-file', f => !f ? MESSAGES.val.prodFileEmpty : !f.type.startsWith('image/') ? MESSAGES.val.prodFileType : '']
+    ] },
+    { name: 'Details', next: 'Review', checks: () => [
+        ['prod-desc', v => v ? '' : MESSAGES.val.prodDesc]
+    ] },
+    { name: 'Review', next: 'Publish listing', checks: () => [] }
+];
+let uploadStep = 0;
+let uploadPreviewUrl = null;
+
+const CHECK_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
+
+function setupUploadWizard() {
+    const stepper = document.getElementById('upload-stepper');
+    if (!stepper) return;
+    stepper.innerHTML = UPLOAD_STEPS.map((step, i) =>
+        `<li class="step-dot" data-step="${i}"><span class="step-circle"></span><span class="step-name">${escapeHTML(step.name)}</span></li>`
+    ).join('');
+
+    document.getElementById('prod-file').addEventListener('change', updateUploadPreview);
+    document.getElementById('prod-desc').addEventListener('input', e => {
+        document.getElementById('prod-desc-count').textContent = e.target.value.length;
+    });
+    showUploadStep(0, false);
+}
+
+function showUploadStep(n, focus = true) {
+    uploadStep = Math.max(0, Math.min(UPLOAD_STEPS.length - 1, n));
+    const total = UPLOAD_STEPS.length;
+
+    document.querySelectorAll('#upload-form .wizard-step').forEach(sec => {
+        sec.classList.toggle('hidden', Number(sec.dataset.step) !== uploadStep);
+    });
+
+    document.querySelectorAll('#upload-stepper .step-dot').forEach(dot => {
+        const i = Number(dot.dataset.step);
+        dot.classList.toggle('done', i < uploadStep);
+        dot.classList.toggle('current', i === uploadStep);
+        dot.setAttribute('aria-current', i === uploadStep ? 'step' : 'false');
+        dot.querySelector('.step-circle').innerHTML = i < uploadStep ? CHECK_SVG : String(i + 1);
+    });
+
+    const pct = Math.round(((uploadStep + 1) / total) * 100);
+    document.getElementById('upload-progress-fill').style.width = pct + '%';
+    document.getElementById('upload-progress').setAttribute('aria-valuenow', pct);
+    document.getElementById('upload-step-count').textContent = `Step ${uploadStep + 1} of ${total} \u00b7 ${UPLOAD_STEPS[uploadStep].name}`;
+
+    document.getElementById('upload-back-btn').classList.toggle('hidden', uploadStep === 0);
+    const nextBtn = document.getElementById('upload-next-btn');
+    if (!nextBtn.classList.contains('is-loading')) nextBtn.textContent = UPLOAD_STEPS[uploadStep].next;
+
+    if (uploadStep === total - 1) renderUploadReview();
+    clearFormErrors(document.getElementById('upload-form'));
+
+    if (focus) {
+        requestAnimationFrame(() => {
+            document.querySelector(`#upload-form .wizard-step[data-step="${uploadStep}"] input, #upload-form .wizard-step[data-step="${uploadStep}"] select, #upload-form .wizard-step[data-step="${uploadStep}"] textarea`)?.focus();
+        });
+    }
+}
+
+function nextUploadStep() {
+    const form = document.getElementById('upload-form');
+    if (!validateForm(form, UPLOAD_STEPS[uploadStep].checks())) return;
+    showUploadStep(uploadStep + 1);
+}
+
+function prevUploadStep() {
+    showUploadStep(uploadStep - 1);
+}
+
+function updateUploadPreview() {
+    const file = document.getElementById('prod-file').files[0];
+    const box = document.getElementById('upload-preview');
+    if (uploadPreviewUrl) { URL.revokeObjectURL(uploadPreviewUrl); uploadPreviewUrl = null; }
+    if (!file || !file.type.startsWith('image/')) {
+        box.classList.add('hidden');
+        return;
+    }
+    uploadPreviewUrl = URL.createObjectURL(file);
+    document.getElementById('upload-preview-img').src = uploadPreviewUrl;
+    document.getElementById('upload-file-name').textContent = file.name;
+    document.getElementById('upload-file-size').textContent = file.size >= 1048576 ? `${(file.size / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(file.size / 1024))} KB`;
+    box.classList.remove('hidden');
+}
+
+function clearUploadFile() {
+    const input = document.getElementById('prod-file');
+    input.value = '';
+    updateUploadPreview();
+    input.focus();
+}
+
+function renderUploadReview() {
+    const box = document.getElementById('upload-review');
+    const file = document.getElementById('prod-file').files[0];
+    const rows = [
+        ['Item', document.getElementById('prod-name').value.trim()],
+        ['Category', document.getElementById('prod-category').value],
+        ['Description', document.getElementById('prod-desc').value.trim()]
+    ];
+    box.innerHTML = '';
+    if (file && uploadPreviewUrl) {
+        const img = document.createElement('img');
+        img.className = 'review-photo';
+        img.src = uploadPreviewUrl;
+        img.alt = 'Photo of your item';
+        box.appendChild(img);
+    }
+    const dl = document.createElement('dl');
+    rows.forEach(([label, value]) => {
+        const dt = document.createElement('dt');
+        dt.textContent = label;
+        const dd = document.createElement('dd');
+        dd.textContent = value;
+        dl.append(dt, dd);
+    });
+    box.appendChild(dl);
+}
+
+function resetUploadWizard() {
+    if (uploadPreviewUrl) { URL.revokeObjectURL(uploadPreviewUrl); uploadPreviewUrl = null; }
+    document.getElementById('upload-preview').classList.add('hidden');
+    document.getElementById('prod-desc-count').textContent = '0';
+    showUploadStep(0, false);
+}
+
+function handleUploadProduct(e) {
+    e.preventDefault();
+    if (uploadStep < UPLOAD_STEPS.length - 1) {
+        nextUploadStep();
+        return;
+    }
+    const form = e.target;
+    const title = document.getElementById('prod-name').value.trim();
+    const category = document.getElementById('prod-category').value;
+    const fileInput = document.getElementById('prod-file');
+    const desc = document.getElementById('prod-desc').value.trim();
+
+    if (!currentUser) {
+        showToast(MESSAGES.signInToPublish);
+        return;
+    }
+
+    const allChecks = UPLOAD_STEPS.flatMap(step => step.checks());
+    if (!validateForm(form, allChecks)) {
+        // Jump back to the first step that has a problem and show its errors there
+        const bad = form.querySelector('.invalid');
+        const section = bad && bad.closest('.wizard-step');
+        if (section) {
+            showUploadStep(Number(section.dataset.step), false);
+            validateForm(form, allChecks);
+        }
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const submitBtn = form.querySelector('button[type="submit"]');
+    setButtonLoading(submitBtn, true, MESSAGES.loading.publishing);
+
+    const publishListing = async (imageDataUrl) => {
+        const { data, error } = await db.from('products').insert({
+            title: title,
+            category: category,
+            description: desc,
+            owner: currentUser.name,
+            status: 'Available',
+            approval: 'pending',
+            image: imageDataUrl
+        }).select().single();
+
+        if (error) {
+            console.error('Supabase publish error:', error);
+            showToast(MESSAGES.saveFailed(error.message), 'error');
+            setButtonLoading(submitBtn, false);
+            return;
+        }
+
+        products.unshift(rowToProduct(data));
+        closeModal('upload-modal'); // Automatically closes modal upon successful publication
+        showToast(MESSAGES.listingSubmitted, 'info');
+        setButtonLoading(submitBtn, false);
+        form.reset();
+        resetUploadWizard();
+        renderProducts();
+        renderWishlist();
+    };
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const img = new Image();
+        
+        img.onload = function() {
+            try {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 800;
+                const MAX_HEIGHT = 800;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+                publishListing(compressedBase64);
+            } catch (err) {
+                console.error("Canvas compression error, using raw image data:", err);
+                publishListing(event.target.result);
+            }
+        };
+
+        img.onerror = function() {
+            setButtonLoading(submitBtn, false);
+            showToast(MESSAGES.imageProcessFailed, 'error');
+        };
+
+        img.src = event.target.result;
+    };
+
+    reader.onerror = function() {
+        setButtonLoading(submitBtn, false);
+        showToast(MESSAGES.imageReadFailed, 'error');
+    };
+
+    reader.readAsDataURL(file);
+}
+
+async function deleteProduct(id) {
+    const removedIndex = products.findIndex(p => p.id === id);
+    if (removedIndex === -1) return;
+
+    const ok = await confirmDialog({
+        title: MESSAGES.confirm.deleteTitle,
+        message: MESSAGES.confirm.deleteBody(products[removedIndex].title),
+        warnings: MESSAGES.confirm.deleteWarnings,
+        requireText: products[removedIndex].title,
+        confirmText: MESSAGES.confirm.deleteYes,
+        cancelText: MESSAGES.confirm.cancel,
+        tone: 'danger',
+        icon: 'trash'
+    });
+    if (!ok) return;
+    const index = products.findIndex(p => p.id === id);
+    if (index === -1) return;
+
+    const removedProd = products[index];
+
+    const { error } = await db.from('products').delete().eq('id', id);
+    if (error) {
+        showToast(MESSAGES.saveFailed(error.message), 'error');
+        return;
+    }
+
+    if (isAdminUser()) await animateOut([adminRow(id)], 'admin-removed');
+    else await animateOut([document.querySelector(`[onclick="deleteProduct('${id}')"]`)?.closest('.product-card, .glass-card')], 'admin-removed');
+    products.splice(index, 1);
+    wishlist = wishlist.filter(wid => wid !== id);
+    saveWishlist();
+
+    showToast(MESSAGES.listingRemoved(removedProd.title));
+    if (isAdminUser()) renderAdmin();
+    renderProducts();
+    renderWishlist();
+}
+
 // ==========================================================
