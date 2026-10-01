@@ -1707,4 +1707,25 @@ async function handleEditProduct(e) {
     if (currentUser) renderChatThreads();
 }
 
+// ==========================================================
+// 9. PRODUCTS - mark Available / Sold
+// ==========================================================
+async function toggleProductStatus(productId, currentStatus) {
+    const prod = products.find(p => p.id === productId);
+    if (!prod) return;
+
+    const newStatus = currentStatus === 'Sold' ? 'Available' : 'Sold';
+
+    const { error } = await db.from('products').update({ status: newStatus }).eq('id', productId);
+    if (error) {
+        showToast(MESSAGES.saveFailed(error.message), 'error');
+        return;
+    }
+
+    prod.status = newStatus;
+    showToast(MESSAGES.statusChanged(prod.status));
+    renderProducts();
+    renderWishlist();
+}
+
 // ==========================================================
