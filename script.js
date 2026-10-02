@@ -2153,4 +2153,464 @@ function getUserChats() {
     return globalChats.filter(c => (c.buyerName === currentUser.name || c.sellerName === currentUser.name) && !isChatHiddenFor(c));
 }
 
+// ==========================================================
+// 10. CHAT - unread message counter (badge on the Messages tab)
+//     "Seen" markers are kept in this browser, per account and per conversation.
+//     Unread = messages from the other person that you have not opened yet.
+// ==========================================================
+const SEEN_KEY = 'dlsau_chat_seen';
+let prevUnread = null;
+
+function readSeenStore() {
+    try { return JSON.parse(localStorage.getItem(SEEN_KEY)) || {}; } catch (err) { return {}; }
+}
+
+function otherMessageCount(chat) {
+    return visibleMessages(chat).filter(({ msg }) => msg.sender !== currentUser.name).length;
+}
+
+function markChatRead(chat) {
+    const store = readSeenStore();
+    const mine = store[currentUser.name] = store[currentUser.name] || {};
+    const count = otherMessageCount(chat);
+    if (mine[chat.id] !== count) {
+        mine[chat.id] = count;
+        localStorage.setItem(SEEN_KEY, JSON.stringify(store));
+    }
+}
+
+// "Seen" is shared through the database: chat.seen[username] = how many messages that person has opened
+function markChatSeen(chat) {
+    const me = currentUser.name;
+    const total = chat.messages.length;
+    if ((chat.seen[me] || 0) >= total) return;
+    chat.seen[me] = total;
+    db.from('chats').update({ seen: chat.seen }).eq('id', chat.id).then(({ error }) => {
+        if (error) console.warn('Could not save seen state:', error.message);
+    });
+}
+
+function unreadCount(chat) {
+    const store = readSeenStore();
+    const total = otherMessageCount(chat);
+    let seen = (store[currentUser.name] && store[currentUser.name][chat.id]) || 0;
+    if (seen > total) {
+        // Messages were deleted: keep the marker from running ahead of reality
+        seen = total;
+        store[currentUser.name][chat.id] = seen;
+        localStorage.setItem(SEEN_KEY, JSON.stringify(store));
+    }
+    return total - seen;
+}
+
+function isChatTabVisible() {
+    const view = document.getElementById('tab-chat-view');
+    return !!view && !view.classList.contains('hidden') && !document.hidden;
+}
+
+function paintUnreadBadges(total) {
+    const label = total === 1 ? '1 unread message' : `${total} unread messages`;
+    ['unread-badge', 'mob-unread-badge'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const previous = Number(el.dataset.count || 0);
+        el.textContent = total > 99 ? '99+' : String(total);
+        el.dataset.count = total;
+        el.classList.toggle('hidden', total === 0);
+        el.setAttribute('aria-label', label);
+        if (total > previous) {
+            el.classList.remove('pop');
+            void el.offsetWidth;
+            el.classList.add('pop');
+        }
+    });
+    document.title = total > 0 ? `(${total > 99 ? '99+' : total}) ${BRAND_TITLE}` : BRAND_TITLE;
+}
+const BRAND_TITLE = 'DLSAU Trading Hub';
+
+// Counts unread messages, updates every badge and announces new ones with a toast
+function refreshUnread(chats) {
+    if (!currentUser) {
+        prevUnread = null;
+        paintUnreadBadges(0);
+        return {};
+    }
+
+    if (isChatTabVisible() && activeChatId) {
+        const active = chats.find(c => c.id === activeChatId);
+        if (active) { markChatRead(active); markChatSeen(active); }
+    }
+
+    const byChat = {};
+    let total = 0;
+    chats.forEach(chat => {
+        byChat[chat.id] = unreadCount(chat);
+        total += byChat[chat.id];
+    });
+    paintUnreadBadges(total);
+
+    if (prevUnread === null) {
+        if (total > 0) showToast(MESSAGES.unreadSummary(total), 'info');
+    } else {
+        const fresh = chats.filter(chat => byChat[chat.id] > (prevUnread[chat.id] || 0));
+        if (fresh.length === 1) {
+            const chat = fresh[0];
+            showToast(MESSAGES.newMessage(chat.buyerName === currentUser.name ? chat.sellerName : chat.buyerName), 'info');
+        } else if (fresh.length > 1) {
+            showToast(MESSAGES.unreadSummary(total), 'info');
+        }
+    }
+    prevUnread = byChat;
+    return byChat;
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && currentUser) renderChatThreads();
+});
+
+function renderChatThreads() {
+    const list = document.getElementById('chat-threads-list');
+    if (!list) return;
+
+    const userChats = getUserChats();
+    const unreadByChat = refreshUnread(userChats);
+
+    if (userChats.length === 0) {
+        list.innerHTML = `<div class="p-3 text-muted" style="padding: 16px; font-size: 12px; text-align: center;">No active chats yet.</div>`;
+        return;
+    }
+
+    list.innerHTML = '';
+    userChats.forEach(chat => {
+        const isBuyer = chat.buyerName === currentUser.name;
+        const partnerName = isBuyer ? chat.sellerName : chat.buyerName;
+        const partnerInitials = partnerName ? partnerName.substring(0, 2).toUpperCase() : "NA";
+
+        const shown = visibleMessages(chat);
+        const lastMsg = shown.length ? shown[shown.length - 1].msg : null;
+        const item = document.createElement('div');
+        const unread = unreadByChat[chat.id] || 0;
+        item.className = `chat-thread-item ${chat.id === activeChatId ? 'active' : ''} ${unread ? 'unread' : ''}`;
+        item.onclick = () => { selectChatThread(chat.id); openChatPanel(); };
+
+        item.innerHTML = `
+            <div class="avatar">${escapeHTML(partnerInitials)}</div>
+            <div class="thread-info">
+                <div class="thread-title">
+                    <span>${escapeHTML(partnerName)}</span>
+                    <span class="thread-time">${lastMsg ? escapeHTML(lastMsg.timestamp) : ''}</span>
+                    ${unread ? `<span class="thread-unread" aria-label="${unread} unread">${unread > 99 ? '99+' : unread}</span>` : ''}
+                </div>
+                <div class="thread-item-name">${escapeHTML(chat.itemTitle)}</div>
+                <div class="thread-last-msg">${lastMsg ? `${lastMsg.sender === currentUser.name ? 'You: ' : ''}${escapeHTML(lastMsg.text)}` : ''}</div>
+            </div>
+        `;
+        list.appendChild(item);
+    });
+}
+
+function selectChatThread(chatId) {
+    if (activeChatId !== chatId) editingMsgIndex = null;
+    activeChatId = chatId;
+
+    const chat = globalChats.find(c => c.id === chatId);
+    if (!chat) return;
+
+    const isBuyer = chat.buyerName === currentUser.name;
+    const partnerName = isBuyer ? chat.sellerName : chat.buyerName;
+    const partnerInitials = partnerName ? partnerName.substring(0, 2).toUpperCase() : "NA";
+
+    document.getElementById('chat-empty-view').classList.add('hidden');
+    document.getElementById('chat-active-view').classList.remove('hidden');
+
+    document.getElementById('chat-recipient-avatar').innerText = partnerInitials;
+    document.getElementById('chat-recipient-name').innerText = partnerName;
+    document.getElementById('chat-item-context').innerText = `Item: ${chat.itemTitle} (${isBuyer ? 'Seller' : 'Buyer'}: ${partnerName})`;
+
+    toggleChatRate(false);
+    refreshChatRatePanel();
+    renderChatThreads();
+    renderChatMessages();
+}
+
+// ----- animation helpers
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function animateOut(els, cls = 'anim-out', stagger = 0) {
+    els = Array.from(els || []).filter(Boolean);
+    if (!els.length || prefersReducedMotion()) return Promise.resolve();
+    return Promise.all(els.map((el, i) => new Promise(resolve => {
+        el.style.animationDelay = `${i * stagger}ms`;
+        el.classList.add(cls);
+        const done = () => resolve();
+        el.addEventListener('animationend', done, { once: true });
+        setTimeout(done, 700 + i * stagger);
+    })));
+}
+
+function flashEl(el, cls = 'anim-flash') {
+    if (!el || prefersReducedMotion()) return;
+    el.classList.remove(cls);
+    void el.offsetWidth;
+    el.classList.add(cls);
+    setTimeout(() => el.classList.remove(cls), 1400);
+}
+
+const adminRow = id => document.querySelector(`#admin-body [data-id="${id}"]`);
+
+function renderChatMessages() {
+    const area = document.getElementById('chat-messages-area');
+    if (!area) return;
+
+    const chat = globalChats.find(c => c.id === activeChatId);
+    if (!chat) return;
+
+    const keepScroll = editingMsgIndex !== null ? area.scrollTop : null;
+    area.innerHTML = '';
+    visibleMessages(chat).forEach(({ msg, index }) => {
+        const isMine = msg.sender === currentUser.name;
+        const bubble = document.createElement('div');
+        bubble.className = `chat-bubble ${isMine ? 'mine' : 'theirs'}`;
+        bubble.dataset.index = index;
+
+        if (isMine && editingMsgIndex === index) {
+            bubble.classList.add('editing');
+            const form = document.createElement('form');
+            form.className = 'msg-edit';
+            form.innerHTML = `
+                <label class="sr-only" for="msg-edit-input">Edit message</label>
+                <input id="msg-edit-input" type="text" maxlength="500" autocomplete="off">
+                <div class="msg-edit-actions">
+                    <button type="button" class="msg-edit-cancel">Cancel</button>
+                    <button type="submit" class="msg-edit-save">Save</button>
+                </div>`;
+            const input = form.querySelector('input');
+            input.value = msg.text;
+            form.addEventListener('submit', e => { e.preventDefault(); saveMessageEdit(index, input.value); });
+            form.querySelector('.msg-edit-cancel').addEventListener('click', cancelMessageEdit);
+            input.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); cancelMessageEdit(); } });
+            bubble.appendChild(form);
+            area.appendChild(bubble);
+            setTimeout(() => { input.focus(); input.select(); }, 0);
+            return;
+        }
+
+        const partner = chat.buyerName === currentUser.name ? chat.sellerName : chat.buyerName;
+        const isLast = index === chat.messages.length - 1;
+        const receipt = isMine && isLast
+            ? ((chat.seen[partner] || 0) >= chat.messages.length
+                ? ' &middot; <span class="msg-seen"><i data-lucide="check-check"></i> Seen</span>'
+                : ' &middot; <span class="msg-sent"><i data-lucide="check"></i> Sent</span>')
+            : '';
+
+        bubble.innerHTML = `
+            <div class="msg-sender">${isMine ? 'You' : escapeHTML(msg.sender)}</div>
+            ${msg.productId ? listingPreviewHTML(msg) : ''}
+            <div class="msg-text">${escapeHTML(msg.text)}</div>
+            <div class="msg-time">${escapeHTML(msg.timestamp)}${msg.edited ? ' &middot; edited' : ''}${receipt}</div>
+        `;
+
+        if (isMine) {
+            const actions = document.createElement('div');
+            actions.className = 'msg-actions';
+            actions.innerHTML = `
+                <button type="button" class="msg-action-edit" aria-label="Edit message" title="Edit message"><i data-lucide="pencil"></i></button>
+                <button type="button" class="msg-action-delete" aria-label="Delete message" title="Delete message"><i data-lucide="trash-2"></i></button>`;
+            actions.querySelector('.msg-action-edit').addEventListener('click', () => startMessageEdit(index));
+            actions.querySelector('.msg-action-delete').addEventListener('click', () => deleteMessage(index));
+            bubble.appendChild(actions);
+        }
+        area.appendChild(bubble);
+    });
+
+    area.scrollTop = keepScroll !== null ? keepScroll : area.scrollHeight;
+    lucide.createIcons();
+}
+
+// Small card with the item's photo, shown inside a chat message that was sent from the Buy button
+function listingPreviewHTML(msg) {
+    const prod = products.find(p => p.id === msg.productId);
+    if (!prod) {
+        return `<div class="chat-listing gone"><div class="chat-listing-info"><strong>${escapeHTML(msg.productTitle || 'Listing')}</strong><span>This listing is no longer available.</span></div></div>`;
+    }
+    return `<div class="chat-listing">
+        <img src="${prod.img}" alt="${escapeHTML(prod.title)}">
+        <div class="chat-listing-info">
+            <strong>${escapeHTML(prod.title)}</strong>
+            <span>${escapeHTML(prod.category)} &middot; ${escapeHTML(prod.status || 'Available')}</span>
+            <span>Seller: ${escapeHTML(prod.owner)}</span>
+        </div>
+    </div>`;
+}
+
+function startMessageEdit(index) {
+    editingMsgIndex = index;
+    renderChatMessages();
+}
+
+function cancelMessageEdit() {
+    editingMsgIndex = null;
+    renderChatMessages();
+}
+
+async function saveMessageEdit(index, newText) {
+    const chat = globalChats.find(c => c.id === activeChatId);
+    const msg = chat && chat.messages[index];
+    if (!msg || msg.sender !== currentUser.name) return;
+
+    const text = newText.trim();
+    if (!text) {
+        flagEmptyChatInput(document.getElementById('msg-edit-input'));
+        return;
+    }
+    if (text === msg.text) {
+        cancelMessageEdit();
+        return;
+    }
+
+    const previous = { text: msg.text, edited: msg.edited };
+    msg.text = text;
+    msg.edited = true;
+
+    const failure = await saveChatToDb(chat);
+    if (failure) {
+        msg.text = previous.text;
+        msg.edited = previous.edited;
+        chatAlert(MESSAGES.saveFailed(failure), 'error');
+        return;
+    }
+
+    editingMsgIndex = null;
+    renderChatMessages();
+    renderChatThreads();
+    chatAlert(MESSAGES.messageEdited, 'success');
+}
+
+async function deleteMessage(index) {
+    const chat = globalChats.find(c => c.id === activeChatId);
+    const msg = chat && chat.messages[index];
+    if (!msg || msg.sender !== currentUser.name) return;
+
+    const ok = await confirmDialog({
+        title: MESSAGES.confirm.deleteMessageTitle,
+        message: MESSAGES.confirm.deleteMessageBody,
+        confirmText: MESSAGES.confirm.deleteMessageYes,
+        cancelText: MESSAGES.confirm.cancel,
+        tone: 'danger',
+        icon: 'trash'
+    });
+    const current = chat.messages.indexOf(msg);
+    if (!ok || current === -1) return;
+
+    const bubbleEl = document.querySelector(`#chat-messages-area .chat-bubble[data-index="${current}"]`);
+    const previousDeletedBy = { ...(chat.deletedBy || {}) };
+    const exit = animateOut([bubbleEl], 'msg-out');
+    chat.messages.splice(current, 1);
+    // Keep each person's "hidden up to here" marker pointing at the same place
+    Object.keys(chat.deletedBy || {}).forEach(name => { if (current < chat.deletedBy[name]) chat.deletedBy[name]--; });
+    Object.keys(chat.seen || {}).forEach(name => { if (current < chat.seen[name]) chat.seen[name]--; });
+
+    const failure = await saveChatToDb(chat);
+    db.from('chats').update({ seen: chat.seen }).eq('id', chat.id).then(() => {});
+    await exit;
+    if (failure) {
+        bubbleEl?.classList.remove('msg-out');
+        chat.messages.splice(current, 0, msg);
+        chat.deletedBy = previousDeletedBy;
+        chatAlert(MESSAGES.saveFailed(failure), 'error');
+        return;
+    }
+
+    editingMsgIndex = null;
+    renderChatMessages();
+    renderChatThreads();
+    chatAlert(MESSAGES.messageDeleted, 'info');
+}
+
+async function deleteConversation() {
+    const chat = globalChats.find(c => c.id === activeChatId);
+    if (!chat) return;
+    const partnerName = chat.buyerName === currentUser.name ? chat.sellerName : chat.buyerName;
+
+    const ok = await confirmDialog({
+        title: MESSAGES.confirm.deleteChatTitle,
+        message: MESSAGES.confirm.deleteChatBody(partnerName),
+        confirmText: MESSAGES.confirm.deleteChatYes,
+        cancelText: MESSAGES.confirm.cancel,
+        tone: 'danger',
+        icon: 'trash'
+    });
+    if (!ok) return;
+
+    const before = { ...(chat.deletedBy || {}) };
+    chat.deletedBy = { ...(chat.deletedBy || {}), [currentUser.name]: chat.messages.length };
+
+    // When both people have deleted everything, remove the conversation completely
+    const removeCompletely = [chat.buyerName, chat.sellerName].every(name => chat.deletedBy[name] !== undefined && chat.deletedBy[name] >= chat.messages.length);
+
+    let failure = null;
+    if (removeCompletely) {
+        const { error } = await db.from('chats').delete().eq('id', chat.id);
+        failure = error ? error.message : null;
+    } else {
+        failure = await saveChatToDb(chat);
+    }
+
+    if (failure) {
+        chat.deletedBy = before;
+        chatAlert(MESSAGES.saveFailed(failure), 'error');
+        return;
+    }
+
+    await animateOut([document.getElementById('chat-active-view'), document.querySelector('#chat-threads-list .chat-thread-item.active')], 'msg-out');
+    document.getElementById('chat-active-view').classList.remove('msg-out');
+
+    if (removeCompletely) globalChats = globalChats.filter(c => c.id !== chat.id);
+
+    activeChatId = null;
+    editingMsgIndex = null;
+    document.getElementById('chat-active-view').classList.add('hidden');
+    document.getElementById('chat-empty-view').classList.remove('hidden');
+    renderChatThreads();
+    chatAlert(MESSAGES.chatDeleted(partnerName), 'info');
+}
+
+async function handleSendChatMessage(e) {
+    e.preventDefault();
+    const input = document.getElementById('chat-input-field');
+    const text = input.value.trim();
+    if (!activeChatId) return;
+    if (!text) {
+        flagEmptyChatInput(input);
+        return;
+    }
+
+    const chat = globalChats.find(c => c.id === activeChatId);
+    if (!chat) return;
+
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    chat.messages.push({
+        sender: currentUser.name,
+        text: text,
+        timestamp: timeStr
+    });
+
+    const failure = await saveChatToDb(chat);
+    if (failure) {
+        chat.messages.pop();
+        chatAlert(MESSAGES.saveFailed(failure), 'error');
+        return;
+    }
+
+    input.value = '';
+    document.getElementById('chat-alert-slot').innerHTML = '';
+    renderChatMessages();
+    renderChatThreads();
+    const area = document.getElementById('chat-messages-area');
+    flashEl(area.lastElementChild, 'msg-in');
+    flashEl(document.querySelector('.chat-input-area button[type="submit"]'), 'send-pop');
+    flashEl(document.querySelector('#chat-threads-list .chat-thread-item.active'), 'anim-flash');
+}
+
 // ==========================================================
