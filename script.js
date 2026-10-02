@@ -2017,4 +2017,140 @@ async function deleteProduct(id) {
     renderWishlist();
 }
 
+// ==========================================================
+// 10. CHAT - conversations and messages
+// ==========================================================
+async function buyItemAndStartChat(productId) {
+    const prod = products.find(p => p.id === productId);
+    if (!prod) return;
+
+    if (currentUser && prod.owner === currentUser.name) {
+        showToast(MESSAGES.cannotBuyOwn);
+        return;
+    }
+    if (!isApproved(prod)) {
+        showToast(MESSAGES.notApproved, 'warning');
+        return;
+    }
+
+    let chatThread = globalChats.find(c => 
+        c.buyerName === currentUser.name && 
+        c.sellerName === prod.owner && 
+        c.itemTitle === prod.title
+    );
+
+    if (!chatThread) {
+        const openingMessage = {
+            sender: currentUser.name,
+            text: `Hi! I'm interested in buying your "${prod.title}". Is it still available?`,
+            productId: prod.id,
+            productTitle: prod.title,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+
+        const { data, error } = await db.from('chats').insert({
+            buyer_name: currentUser.name,
+            seller_name: prod.owner,
+            item_title: prod.title,
+            messages: [openingMessage],
+            deleted_by: {},
+            seen: { [currentUser.name]: 1 }
+        }).select().single();
+
+        if (error) {
+            showToast(MESSAGES.saveFailed(error.message), 'error');
+            return;
+        }
+
+        chatThread = rowToChat(data);
+        globalChats.push(chatThread);
+    } else if (isChatHiddenFor(chatThread)) {
+        // Re-opening a conversation the user deleted: greet again and un-hide it
+        chatThread.messages.push({
+            sender: currentUser.name,
+            text: `Hi! I'm interested in buying your "${prod.title}". Is it still available?`,
+            productId: prod.id,
+            productTitle: prod.title,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+        delete chatThread.deletedBy[currentUser.name];
+
+        const failure = await saveChatToDb(chatThread);
+        if (failure) {
+            chatThread.messages.pop();
+            chatThread.deletedBy[currentUser.name] = chatThread.messages.length - 1;
+            showToast(MESSAGES.saveFailed(failure), 'error');
+            return;
+        }
+    }
+
+    activeChatId = chatThread.id;
+    switchMainTab('chat');
+    selectChatThread(chatThread.id);
+    openChatPanel();
+    showToast(MESSAGES.chatOpened(prod.owner));
+}
+
+function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
+// Deleting a conversation only hides it for the person who deleted it.
+// chat.deletedBy = { username: number of messages that were hidden }
+function chatOffset(chat, username = currentUser && currentUser.name) {
+    return (chat.deletedBy && chat.deletedBy[username]) || 0;
+}
+
+function isChatHiddenFor(chat, username = currentUser && currentUser.name) {
+    return chat.deletedBy && chat.deletedBy[username] !== undefined && chat.messages.length <= chat.deletedBy[username];
+}
+
+function visibleMessages(chat) {
+    const offset = chatOffset(chat);
+    return chat.messages.map((msg, index) => ({ msg, index })).slice(offset);
+}
+
+let editingMsgIndex = null;
+let chatAlertTimer = null;
+
+// Empty message: the box turns red and shakes, like the login / create account fields
+function flagEmptyChatInput(input) {
+    if (!input) return;
+    input.classList.add('invalid');
+    input.setAttribute('aria-invalid', 'true');
+    input.focus();
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        input.animate(
+            [0, -8, 8, -8, 8, -5, 5, -2, 0].map(x => ({ transform: `translateX(${x}px)` })),
+            { duration: 480, easing: 'cubic-bezier(0.36, 0.07, 0.19, 0.97)' }
+        );
+    }
+}
+
+// Alerts inside Messages use the same inline style as the login / create account forms
+function chatAlert(message, type = 'error') {
+    const editForm = document.querySelector('#chat-messages-area .msg-edit');
+    const slot = document.getElementById('chat-alert-slot');
+    clearTimeout(chatAlertTimer);
+    if (slot) slot.innerHTML = '';
+    if (editForm) {
+        formAlert(editForm, message, type);
+        return;
+    }
+    if (!slot) return;
+    const box = document.createElement('div');
+    box.className = `form-alert form-alert-${type}`;
+    box.setAttribute('role', 'alert');
+    const span = document.createElement('span');
+    span.textContent = message;
+    box.append(span);
+    slot.appendChild(box);
+    chatAlertTimer = setTimeout(() => { slot.innerHTML = ''; }, type === 'error' ? 5500 : 3500);
+}
+
+function getUserChats() {
+    if (!currentUser) return [];
+    return globalChats.filter(c => (c.buyerName === currentUser.name || c.sellerName === currentUser.name) && !isChatHiddenFor(c));
+}
+
 // ==========================================================
