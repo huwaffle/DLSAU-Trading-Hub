@@ -2613,4 +2613,26 @@ async function handleSendChatMessage(e) {
     flashEl(document.querySelector('#chat-threads-list .chat-thread-item.active'), 'anim-flash');
 }
 
+// ==========================================================
+// 11. MODALS - open / close dialogs
+// ==========================================================
+let modalReturnFocus = null;
+
+function openModal(id) {
+    const modal = document.getElementById(id);
+    modalReturnFocus = document.activeElement;
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => {
+        const first = modal.querySelector('input:not([type="hidden"]), select, textarea') || modal.querySelector('button');
+        first?.focus();
+    });
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    modal.classList.add('hidden');
+    modal.querySelectorAll('form').forEach(clearFormErrors);
+    if (modalReturnFocus && document.contains(modalReturnFocus)) modalReturnFocus.focus();
+    modalReturnFocus = null;
+}
 // ==========================================================
