@@ -2635,4 +2635,30 @@ function closeModal(id) {
     if (modalReturnFocus && document.contains(modalReturnFocus)) modalReturnFocus.focus();
     modalReturnFocus = null;
 }
+// ==========================================================
+// 12. TEAM - developers popup (opens from the leaf logo)
+//     Add or remove names here. The list is sorted A-Z by first name automatically.
+// ==========================================================
+const TEAM = [
+    'Carlos Alcantara',
+    'Justine Garma',
+    'Cyril Rodriguez',
+    'Jose Gabo',
+    'Justin Encarnado',
+    'Kyler Santos'
+];
+
+function renderTeam() {
+    const list = document.getElementById('team-list');
+    if (!list) return;
+    list.innerHTML = '';
+    [...TEAM].sort((a, b) => a.localeCompare(b)).forEach((name, i) => {
+        const li = document.createElement('li');
+        li.className = 'team-item';
+        li.style.setProperty('--i', i);
+        li.textContent = name;
+        list.appendChild(li);
+    });
+}
+
 // ==========================================================
