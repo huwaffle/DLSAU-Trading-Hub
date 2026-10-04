@@ -2661,4 +2661,69 @@ function renderTeam() {
     });
 }
 
+// ==========================================================
+// 13. NOTIFICATIONS - bell in the top bar (listing approved / rejected)
+// ==========================================================
+async function notify(recipient, type, title, body) {
+    const { error } = await db.from('notifications').insert({ recipient, type, title, body: body || null });
+    if (error) console.warn('Could not send notification:', error.message);
+}
+
+function renderNotifications() {
+    const badge = document.getElementById('notif-badge');
+    if (!badge) return;
+    const unread = (notifications || []).filter(n => !n.read).length;
+    badge.textContent = unread > 99 ? '99+' : String(unread);
+    badge.classList.toggle('hidden', unread === 0);
+    badge.setAttribute('aria-label', `${unread} unread notifications`);
+
+    const list = document.getElementById('notif-list');
+    if (!list) return;
+    const items = notifications || [];
+    if (!items.length) {
+        list.innerHTML = '<li class="review-empty">No notifications yet.</li>';
+        return;
+    }
+    list.innerHTML = items.map(n => `
+        <li data-id="${escapeHTML(String(n.id))}" class="notif-item ${n.read ? '' : 'unread'} ${escapeHTML(n.type)}">
+            <i data-lucide="${n.type === 'approved' ? 'circle-check' : n.type === 'rejected' ? 'circle-x' : 'bell'}"></i>
+            <div>
+                <strong>${escapeHTML(n.title)}</strong>
+                ${n.body ? `<p>${escapeHTML(n.body)}</p>` : ''}
+                <time>${new Date(n.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time>
+            </div>
+            <button type="button" class="notif-delete" onclick="deleteNotification('${n.id}')" aria-label="Delete notification" title="Delete">&times;</button>
+        </li>`).join('');
+    lucide.createIcons();
+}
+
+async function deleteNotification(id) {
+    const { error } = await db.from('notifications').delete().eq('id', id);
+    if (error) { showToast(MESSAGES.saveFailed(error.message), 'error'); return; }
+    await animateOut([document.querySelector(`#notif-list [data-id="${id}"]`)], 'notif-out');
+    notifications = (notifications || []).filter(n => n.id !== id);
+    renderNotifications();
+}
+
+async function clearNotifications() {
+    if (!(notifications || []).length) return;
+    const { error } = await db.from('notifications').delete().eq('recipient', currentUser.name);
+    if (error) { showToast(MESSAGES.saveFailed(error.message), 'error'); return; }
+    await animateOut(document.querySelectorAll('#notif-list .notif-item'), 'notif-out', 60);
+    notifications = [];
+    renderNotifications();
+}
+
+async function openNotifications() {
+    renderNotifications();
+    openModal('notif-modal');
+    const unread = (notifications || []).filter(n => !n.read);
+    if (!unread.length) return;
+    const { error } = await db.from('notifications').update({ read: true }).eq('recipient', currentUser.name).eq('read', false);
+    if (error) return;
+    unread.forEach(n => { n.read = true; });
+    const badge = document.getElementById('notif-badge');
+    badge.classList.add('hidden');
+}
+
 // ==========================================================
