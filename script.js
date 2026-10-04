@@ -2726,4 +2726,43 @@ async function openNotifications() {
     badge.classList.add('hidden');
 }
 
+// ==========================================================
+// 14. REPORTS - report the person you are chatting with
+// ==========================================================
+function openReportModal() {
+    const partner = getChatPartnerName();
+    if (!partner) return;
+    const chat = globalChats.find(c => c.id === activeChatId);
+    document.getElementById('report-target-text').textContent = `You are reporting ${partner} about "${chat.itemTitle}".`;
+    document.getElementById('report-form').reset();
+    openModal('report-modal');
+}
+
+async function handleSubmitReport(e) {
+    e.preventDefault();
+    const form = e.target;
+    const partner = getChatPartnerName();
+    const chat = globalChats.find(c => c.id === activeChatId);
+    if (!partner || !chat) return;
+    if (!validateForm(form, [['report-reason', v => v ? '' : MESSAGES.val.reportReason]])) return;
+
+    const btn = document.getElementById('report-submit-btn');
+    setButtonLoading(btn, true, MESSAGES.loading.sending);
+    const { error } = await db.from('reports').insert({
+        reporter: currentUser.name,
+        reported_user: partner,
+        item_title: chat.itemTitle,
+        reason: document.getElementById('report-reason').value,
+        details: document.getElementById('report-details').value.trim() || null,
+        transcript: visibleMessages(chat).slice(-15).map(({ msg }) => ({ sender: msg.sender, text: msg.text, timestamp: msg.timestamp }))
+    });
+    setButtonLoading(btn, false);
+    if (error) {
+        showToast(MESSAGES.saveFailed(error.message), 'error');
+        return;
+    }
+    closeModal('report-modal');
+    showToast(MESSAGES.reportSent(partner), 'success');
+}
+
 // ==========================================================
