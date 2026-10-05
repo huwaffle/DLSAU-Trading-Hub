@@ -3104,4 +3104,36 @@ async function setReportStatus(id, status) {
     flashEl(adminRow(id), status === 'dismissed' ? 'flash-bad' : 'flash-good');
 }
 
+// ==========================================================
+// 16. MOBILE - conversation panel and on-screen keyboard handling
+// ==========================================================
+function openChatPanel() {
+    document.querySelector('.chat-container')?.classList.add('chat-open');
+}
+
+function closeChatPanel() {
+    document.querySelector('.chat-container')?.classList.remove('chat-open');
+}
+
+// Keeps layouts sized to the visible area so the keyboard never covers inputs
+function syncViewport() {
+    const vv = window.visualViewport;
+    const h = vv ? vv.height : window.innerHeight;
+    document.documentElement.style.setProperty('--vvh', h + 'px');
+    const keyboard = vv ? window.innerHeight - vv.height - vv.offsetTop > 120 : false;
+    document.body.classList.toggle('kb-open', keyboard);
+}
+
+if (window.visualViewport) {
+    visualViewport.addEventListener('resize', syncViewport);
+    visualViewport.addEventListener('scroll', syncViewport);
+}
+window.addEventListener('resize', syncViewport);
+syncViewport();
+
+document.addEventListener('focusin', e => {
+    if (!e.target.matches('input, textarea, select')) return;
+    setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300);
+});
+
 // ==========================================================
