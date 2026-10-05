@@ -2765,4 +2765,343 @@ async function handleSubmitReport(e) {
     showToast(MESSAGES.reportSent(partner), 'success');
 }
 
+// ==========================================================
+// 15. ADMIN DASHBOARD - verify listings, manage listings, accounts and reports
+// ==========================================================
+let adminFilter = 'all';
+let rejectingProductId = null;
+let editingAccountId = null;
+
+const fmtDate = iso => iso ? new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+
+function setAdminTab(tab) {
+    adminTab = tab;
+    adminSearch = '';
+    renderAdmin();
+}
+
+function renderAdmin() {
+    if (!isAdminUser()) return;
+    const pending = products.filter(p => p.approval === 'pending');
+    const openReports = adminReports.filter(r => r.status === 'open');
+    [['admin-pending-badge', pending.length], ['admin-tab-pending', pending.length], ['admin-tab-reports', openReports.length]].forEach(([id, n]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = String(n);
+        el.classList.toggle('hidden', n === 0);
+    });
+    const stat = (icon, tone, value, label, tab, note) => `
+        <button type="button" class="admin-stat ${tone}" onclick="setAdminTab('${tab}')">
+            <span class="admin-stat-icon"><i data-lucide="${icon}"></i></span>
+            <span class="admin-stat-text"><strong>${value}</strong><span>${label}</span>${note ? `<em>${note}</em>` : ''}</span>
+        </button>`;
+    document.getElementById('admin-stats').innerHTML =
+        stat('package', 'green', products.length, 'Listings', 'listings', `${products.filter(p => p.approval === 'approved').length} approved \u00b7 ${pending.length} pending`) +
+        stat('users', 'blue', adminAccounts.length, 'Accounts', 'accounts', `${adminAccounts.filter(a => a.suspended).length} suspended`) +
+        stat('flag', 'coral', openReports.length, 'Open reports', 'reports', `${adminReports.length} total`);
+    lucide.createIcons();
+    document.querySelectorAll('#admin-tabs .admin-tab').forEach(b => b.classList.toggle('active', b.dataset.adminTab === adminTab));
+
+    const panel = document.getElementById('admin-panel');
+    if (!panel || document.getElementById('tab-admin-view').classList.contains('hidden')) return;
+
+    if (panel.dataset.tab !== adminTab) {
+        panel.dataset.tab = adminTab;
+        const search = adminTab === 'listings' || adminTab === 'accounts'
+            ? `<input type="search" class="glass-input admin-search" id="admin-search" placeholder="Search ${adminTab}..." value="${escapeHTML(adminSearch)}" oninput="adminSearch = this.value.toLowerCase().trim(); renderAdminBody()">` : '';
+        const filter = adminTab === 'listings'
+            ? `<select class="glass-input select-field admin-filter" onchange="adminFilter = this.value; renderAdminBody()">
+                ${['all', 'pending', 'approved', 'rejected'].map(v => `<option value="${v}" ${adminFilter === v ? 'selected' : ''}>${v === 'all' ? 'All statuses' : v[0].toUpperCase() + v.slice(1)}</option>`).join('')}
+               </select>` : '';
+        panel.innerHTML = `<div class="admin-toolbar">${search}${filter}</div><div id="admin-body"></div>`;
+    }
+    renderAdminBody();
+}
+
+function approvalPill(approval) {
+    return `<span class="pill ${approval}">${approval[0].toUpperCase() + approval.slice(1)}</span>`;
+}
+
+function renderAdminBody() {
+    const body = document.getElementById('admin-body');
+    if (!body) return;
+    const empty = text => `<p class="admin-empty">${text}</p>`;
+
+    if (adminTab === 'pending') {
+        const list = products.filter(p => p.approval === 'pending').reverse();
+        body.innerHTML = list.length ? `<div class="admin-review-list">${list.map(p => `
+            <article class="admin-review" data-id="${p.id}">
+                <img src="${p.img}" alt="${escapeHTML(p.title)}">
+                <div class="admin-review-info">
+                    <h4>${escapeHTML(p.title)}</h4>
+                    <p class="text-muted">${escapeHTML(p.category)} &middot; by ${escapeHTML(p.owner)} &middot; ${fmtDate(p.createdAt)}</p>
+                    <p>${escapeHTML(p.desc || '')}</p>
+                    <div class="admin-actions">
+                        <button class="glass-btn primary-btn" onclick="approveProduct('${p.id}')"><i data-lucide="check"></i> Approve</button>
+                        <button class="glass-btn danger-btn" onclick="openRejectModal('${p.id}')"><i data-lucide="x"></i> Reject</button>
+                        <button class="glass-btn" onclick="openEditListing('${p.id}')"><i data-lucide="pencil"></i> Edit</button>
+                    </div>
+                </div>
+            </article>`).join('')}</div>` : empty('No listings are waiting for review.');
+    } else if (adminTab === 'listings') {
+        const list = products.filter(p =>
+            (adminFilter === 'all' || p.approval === adminFilter) &&
+            (!adminSearch || p.title.toLowerCase().includes(adminSearch) || p.owner.toLowerCase().includes(adminSearch) || p.category.toLowerCase().includes(adminSearch)));
+        body.innerHTML = list.length ? `<div class="admin-table-wrap"><table class="admin-table">
+            <thead><tr><th></th><th>Item</th><th>Seller</th><th>Category</th><th>Review</th><th>Sale</th><th>Actions</th></tr></thead>
+            <tbody>${list.map(p => `
+                <tr data-id="${p.id}">
+                    <td><img class="admin-thumb" src="${p.img}" alt=""></td>
+                    <td><strong>${escapeHTML(p.title)}</strong><br><span class="text-muted">${fmtDate(p.createdAt)}</span></td>
+                    <td>${escapeHTML(p.owner)}</td>
+                    <td>${escapeHTML(p.category)}</td>
+                    <td>${approvalPill(p.approval)}</td>
+                    <td>${escapeHTML(p.status || 'Available')}</td>
+                    <td><div class="admin-actions">
+                        ${p.approval !== 'approved' ? `<button class="glass-btn" onclick="approveProduct('${p.id}')" title="Approve"><i data-lucide="check"></i></button>` : ''}
+                        ${p.approval !== 'rejected' ? `<button class="glass-btn" onclick="openRejectModal('${p.id}')" title="Reject"><i data-lucide="x"></i></button>` : ''}
+                        <button class="glass-btn" onclick="openEditListing('${p.id}')" title="Edit"><i data-lucide="pencil"></i></button>
+                        <button class="glass-btn danger-btn" onclick="deleteProduct('${p.id}')" title="Delete"><i data-lucide="trash"></i></button>
+                    </div></td>
+                </tr>`).join('')}</tbody></table></div>` : empty('No listings match.');
+    } else if (adminTab === 'accounts') {
+        const list = adminAccounts.filter(a => !adminSearch || a.name.toLowerCase().includes(adminSearch) || a.email.toLowerCase().includes(adminSearch));
+        body.innerHTML = list.length ? `<div class="admin-table-wrap"><table class="admin-table">
+            <thead><tr><th>Username</th><th>Email</th><th>Listings</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>${list.map(a => `
+                <tr data-id="${a.id}">
+                    <td><strong>${escapeHTML(a.name)}</strong></td>
+                    <td>${escapeHTML(a.email)}</td>
+                    <td>${products.filter(p => p.owner === a.name).length}</td>
+                    <td>${fmtDate(a.createdAt)}</td>
+                    <td>${a.suspended ? '<span class="pill rejected">Suspended</span>' : '<span class="pill approved">Active</span>'}</td>
+                    <td><div class="admin-actions">
+                        <button class="glass-btn" onclick="openAccountEdit('${a.id}')" title="Edit"><i data-lucide="pencil"></i></button>
+                        <button class="glass-btn" onclick="toggleSuspendAccount('${a.id}')" title="${a.suspended ? 'Unsuspend' : 'Suspend'}"><i data-lucide="${a.suspended ? 'user-check' : 'user-x'}"></i></button>
+                        <button class="glass-btn danger-btn" onclick="deleteAccount('${a.id}')" title="Delete"><i data-lucide="trash"></i></button>
+                    </div></td>
+                </tr>`).join('')}</tbody></table></div>` : empty('No accounts found.');
+    } else {
+        body.innerHTML = adminReports.length ? `<div class="admin-review-list">${adminReports.map(r => {
+            const target = adminAccounts.find(a => a.name === r.reportedUser);
+            return `
+            <article class="admin-report ${r.status}" data-id="${r.id}">
+                <div class="admin-report-head">
+                    <strong>${escapeHTML(r.reporter)} reported ${escapeHTML(r.reportedUser)}</strong>
+                    <span class="pill ${r.status === 'open' ? 'pending' : 'approved'}">${escapeHTML(r.status)}</span>
+                </div>
+                <p class="text-muted">${escapeHTML(r.reason)}${r.itemTitle ? ` &middot; item: ${escapeHTML(r.itemTitle)}` : ''} &middot; ${fmtDate(r.createdAt)}</p>
+                ${r.details ? `<p>${escapeHTML(r.details)}</p>` : ''}
+                ${r.transcript.length ? `<details class="report-transcript"><summary>Conversation (${r.transcript.length} messages)</summary>${r.transcript.map(m => `<p><strong>${escapeHTML(m.sender)}:</strong> ${escapeHTML(m.text)} <em>${escapeHTML(m.timestamp || '')}</em></p>`).join('')}</details>` : ''}
+                <div class="admin-actions">
+                    ${r.status === 'open'
+                        ? `<button class="glass-btn primary-btn" onclick="setReportStatus('${r.id}', 'resolved')">Mark resolved</button>
+                           <button class="glass-btn" onclick="setReportStatus('${r.id}', 'dismissed')">Dismiss</button>`
+                        : `<button class="glass-btn" onclick="setReportStatus('${r.id}', 'open')">Reopen</button>`}
+                    ${target ? `<button class="glass-btn danger-btn" onclick="toggleSuspendAccount('${target.id}')">${target.suspended ? 'Unsuspend user' : 'Suspend user'}</button>` : ''}
+                </div>
+            </article>`;
+        }).join('')}</div>` : empty('No reports have been submitted.');
+    }
+    lucide.createIcons();
+}
+
+// ----- listing review
+// Pending list: row animates away. Other views: row re-renders and flashes.
+async function adminResolveListing(id, cls) {
+    const row = adminRow(id);
+    if (row && adminTab === 'pending') await animateOut([row], cls);
+    renderAdmin();
+    if (adminTab !== 'pending') flashEl(adminRow(id), cls === 'admin-approved' ? 'flash-good' : 'flash-bad');
+}
+
+async function approveProduct(id) {
+    const prod = products.find(p => p.id === id);
+    if (!prod) return;
+    const { error } = await db.from('products').update({ approval: 'approved', reject_reason: null }).eq('id', id);
+    if (error) { showToast(MESSAGES.saveFailed(error.message), 'error'); return; }
+    prod.approval = 'approved';
+    prod.rejectReason = '';
+    notify(prod.owner, 'approved', `Your listing "${prod.title}" was approved.`, 'It is now visible on the marketplace.');
+    showToast(MESSAGES.listingApproved(prod.title), 'success');
+    await adminResolveListing(id, 'admin-approved');
+    renderProducts();
+}
+
+function openRejectModal(id) {
+    const prod = products.find(p => p.id === id);
+    if (!prod) return;
+    rejectingProductId = id;
+    document.getElementById('reject-form').reset();
+    document.getElementById('reject-target-text').textContent = `"${prod.title}" by ${prod.owner}`;
+    openModal('reject-modal');
+}
+
+async function handleRejectListing(e) {
+    e.preventDefault();
+    const prod = products.find(p => p.id === rejectingProductId);
+    if (!prod) return;
+    const reason = document.getElementById('reject-reason').value.trim();
+    const { error } = await db.from('products').update({ approval: 'rejected', reject_reason: reason || null }).eq('id', prod.id);
+    if (error) { showToast(MESSAGES.saveFailed(error.message), 'error'); return; }
+    prod.approval = 'rejected';
+    prod.rejectReason = reason;
+    notify(prod.owner, 'rejected', `Your listing "${prod.title}" was not approved.`, reason ? `Reason: ${reason}` : 'You can edit it and submit it again.');
+    closeModal('reject-modal');
+    showToast(MESSAGES.listingRejected(prod.title), 'info');
+    await adminResolveListing(prod.id, 'admin-rejected');
+    renderProducts();
+}
+
+// ----- accounts
+async function toggleSuspendAccount(id) {
+    const acc = adminAccounts.find(a => a.id === id);
+    if (!acc) return;
+    const suspended = !acc.suspended;
+    if (suspended) {
+        const ok = await confirmDialog({
+            title: `Suspend ${acc.name}?`,
+            message: 'They will no longer be able to sign in until you unsuspend the account.',
+            confirmText: 'Suspend', cancelText: MESSAGES.confirm.cancel, tone: 'warning', icon: 'warning'
+        });
+        if (!ok) return;
+    }
+    const { error } = await db.from('accounts').update({ suspended }).eq('id', id);
+    if (error) { showToast(MESSAGES.saveFailed(error.message), 'error'); return; }
+    acc.suspended = suspended;
+    showToast(MESSAGES.accountUpdated(acc.name), 'success');
+    renderAdmin();
+    flashEl(adminRow(id), suspended ? 'flash-bad' : 'flash-good');
+    adminReports.filter(r => r.reportedUser === acc.name).forEach(r => flashEl(adminRow(r.id), suspended ? 'flash-bad' : 'flash-good'));
+}
+
+async function deleteAccount(id) {
+    const acc = adminAccounts.find(a => a.id === id);
+    if (!acc) return;
+    const ok = await confirmDialog({
+        title: 'Permanently delete this account?',
+        message: `You are about to delete "${acc.name}" and all of their listings.`,
+        warnings: ['This cannot be undone.'],
+        requireText: acc.name,
+        confirmText: 'Delete account', cancelText: MESSAGES.confirm.cancel, tone: 'danger', icon: 'trash'
+    });
+    if (!ok) return;
+    await db.from('products').delete().eq('owner', acc.name);
+    const { error } = await db.from('accounts').delete().eq('id', id);
+    if (error) { showToast(MESSAGES.saveFailed(error.message), 'error'); return; }
+    await animateOut([adminRow(id)], 'admin-removed');
+    adminAccounts = adminAccounts.filter(a => a.id !== id);
+    products = products.filter(p => p.owner !== acc.name);
+    showToast(MESSAGES.accountDeleted(acc.name), 'info');
+    renderAdmin();
+    renderProducts();
+    renderWishlist();
+}
+
+function openAccountEdit(id) {
+    const acc = adminAccounts.find(a => a.id === id);
+    if (!acc) return;
+    editingAccountId = id;
+    clearFormErrors(document.getElementById('account-form'));
+    document.getElementById('acc-name').value = acc.name;
+    document.getElementById('acc-email').value = acc.email;
+    document.getElementById('acc-password').value = '';
+    openModal('account-modal');
+}
+
+// Renames a user everywhere their name is stored
+async function renameUserEverywhere(oldName, newName) {
+    const jobs = [
+        db.from('products').update({ owner: newName }).eq('owner', oldName),
+        db.from('ratings').update({ target_user: newName }).eq('target_user', oldName),
+        db.from('ratings').update({ rated_by: newName }).eq('rated_by', oldName),
+        db.from('notifications').update({ recipient: newName }).eq('recipient', oldName),
+        db.from('reports').update({ reporter: newName }).eq('reporter', oldName),
+        db.from('reports').update({ reported_user: newName }).eq('reported_user', oldName)
+    ];
+    const swapKey = obj => {
+        const out = { ...(obj || {}) };
+        if (oldName in out) { out[newName] = out[oldName]; delete out[oldName]; }
+        return out;
+    };
+    globalChats.filter(c => c.buyerName === oldName || c.sellerName === oldName).forEach(c => {
+        jobs.push(db.from('chats').update({
+            buyer_name: c.buyerName === oldName ? newName : c.buyerName,
+            seller_name: c.sellerName === oldName ? newName : c.sellerName,
+            messages: c.messages.map(m => m.sender === oldName ? { ...m, sender: newName } : m),
+            deleted_by: swapKey(c.deletedBy),
+            seen: swapKey(c.seen)
+        }).eq('id', c.id));
+    });
+    const results = await Promise.all(jobs);
+    const failed = results.find(r => r.error);
+    return failed ? failed.error.message : null;
+}
+
+async function handleEditAccount(e) {
+    e.preventDefault();
+    const form = e.target;
+    const acc = adminAccounts.find(a => a.id === editingAccountId);
+    if (!acc) return;
+
+    const name = document.getElementById('acc-name').value.trim();
+    const email = document.getElementById('acc-email').value.trim();
+    const password = document.getElementById('acc-password').value.trim();
+    const emailChanged = email.toLowerCase() !== acc.email.toLowerCase();
+
+    if (!validateForm(form, [
+        ['acc-name', v => !v ? MESSAGES.val.regName : /^[A-Za-z0-9._]{3,20}$/.test(v) ? '' : MESSAGES.val.regNameInvalid],
+        ['acc-email', v => !v ? MESSAGES.val.regEmailEmpty : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? '' : MESSAGES.val.regEmailInvalid],
+        ['acc-password', v => (v || emailChanged) && v.length < 6 ? (emailChanged ? MESSAGES.val.accPasswordNeeded : MESSAGES.val.regPasswordShort) : '']
+    ])) return;
+
+    if (adminAccounts.some(a => a.id !== acc.id && a.name.toLowerCase() === name.toLowerCase()) || name.toLowerCase() === 'admin') {
+        failForm(form, 'acc-name', MESSAGES.val.accNameTaken);
+        return;
+    }
+    if (adminAccounts.some(a => a.id !== acc.id && a.email.toLowerCase() === email.toLowerCase())) {
+        failForm(form, 'acc-email', MESSAGES.val.accEmailTaken);
+        return;
+    }
+
+    const btn = document.getElementById('account-save-btn');
+    setButtonLoading(btn, true, MESSAGES.loading.saving);
+    const changes = { name, email };
+    if (password) changes.pass_hash = await hashPassword(password, email);
+    if (emailChanged) changes.recovery_hash = null;
+
+    const { error } = await db.from('accounts').update(changes).eq('id', acc.id);
+    if (error) {
+        setButtonLoading(btn, false);
+        showToast(MESSAGES.saveFailed(error.message), 'error');
+        return;
+    }
+    const oldName = acc.name;
+    if (name !== oldName) {
+        const failure = await renameUserEverywhere(oldName, name);
+        if (failure) showToast(MESSAGES.saveFailed(failure), 'error');
+        await Promise.all([loadProducts(), loadChats(), loadRatings()]);
+    }
+    setButtonLoading(btn, false);
+    acc.name = name;
+    acc.email = email;
+    if (changes.pass_hash) acc.passHash = changes.pass_hash;
+    closeModal('account-modal');
+    showToast(MESSAGES.accountUpdated(name), 'success');
+    renderAdmin();
+}
+
+// ----- reports
+async function setReportStatus(id, status) {
+    const report = adminReports.find(r => r.id === id);
+    if (!report) return;
+    const { error } = await db.from('reports').update({ status }).eq('id', id);
+    if (error) { showToast(MESSAGES.saveFailed(error.message), 'error'); return; }
+    const row = adminRow(id);
+    if (row) await animateOut([row], 'admin-removed');
+    report.status = status;
+    renderAdmin();
+    flashEl(adminRow(id), status === 'dismissed' ? 'flash-bad' : 'flash-good');
+}
+
 // ==========================================================
