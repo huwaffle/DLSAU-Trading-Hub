@@ -3136,4 +3136,104 @@ document.addEventListener('focusin', e => {
     setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300);
 });
 
-// ==========================================================
+// ==========================================================
+// 17. LEGAL - Terms of Service, Privacy Policy and the create-account agreement
+// ==========================================================
+const LEGAL_UPDATED = 'Last updated: October 14, 2026';
+const LEGAL_DOCS = {
+    terms: {
+        heading: 'Terms of Service',
+        html: `
+            <p class="legal-updated">${LEGAL_UPDATED}</p>
+            <p>Welcome to DLSAU Trading Hub, a student-to-student marketplace for De La Salle Araneta University. By creating an account or using the site you agree to these terms.</p>
+            <h4>1. Who can use the Hub</h4>
+            <p>The Hub is for DLSAU students. You must give a real email address you control and keep your password private. You are responsible for everything done through your account.</p>
+            <h4>2. Listings</h4>
+            <ul>
+                <li>Post only items you own and are allowed to sell or trade, with honest photos and descriptions.</li>
+                <li>Every listing is reviewed by an admin before it is shown. Listings may be rejected, edited or removed if they break these terms.</li>
+                <li>Prohibited items include weapons, drugs, alcohol, vapes, stolen goods, counterfeit goods, exam papers and anything illegal or against school policy.</li>
+            </ul>
+            <h4>3. Trading and meetups</h4>
+            <p>The Hub only connects students. We do not handle payments, delivery or disputes. Inspect items before paying, and meet in safe, public campus areas. Trades are agreements between you and the other student.</p>
+            <h4>4. Behavior</h4>
+            <p>Be respectful. Harassment, spam, scams, impersonation and misleading other users are not allowed. You can report a user from any chat, and admins may review the reported conversation.</p>
+            <h4>5. Ratings</h4>
+            <p>Ratings and reviews must be honest and based on a real interaction. Abusive or fake reviews may be removed.</p>
+            <h4>6. Suspension and removal</h4>
+            <p>Admins may suspend accounts or delete listings that break these terms or put other students at risk, with or without notice.</p>
+            <h4>7. No warranty</h4>
+            <p>The Hub is provided "as is" as a school project. We do not guarantee the quality, safety or legality of items, or the conduct of other users, and are not liable for losses from trades.</p>
+            <h4>8. Changes</h4>
+            <p>We may update these terms. Continuing to use the Hub after a change means you accept the new terms.</p>`
+    },
+    privacy: {
+        heading: 'Privacy Policy',
+        html: `
+            <p class="legal-updated">${LEGAL_UPDATED}</p>
+            <p>We respect your privacy and handle personal information in line with the Data Privacy Act of 2012 (Republic Act No. 10173) of the Philippines.</p>
+            <h4>1. What we collect</h4>
+            <ul>
+                <li><strong>Account:</strong> username, email address and a securely hashed version of your password and recovery code (never the plain text).</li>
+                <li><strong>Content you post:</strong> listings, photos, descriptions, wishlist activity, ratings and reviews.</li>
+                <li><strong>Messages:</strong> chats you send to other students, including read ("seen") status.</li>
+                <li><strong>Reports and notifications:</strong> reports you file and the notices we send about your listings.</li>
+            </ul>
+            <h4>2. Why we use it</h4>
+            <p>To run your account, show approved listings, let students chat and rate each other, keep the community safe, and notify you about listing reviews and let you reset a forgotten password.</p>
+            <h4>3. Who can see it</h4>
+            <ul>
+                <li>Your username, listings and ratings are visible to other signed-in students.</li>
+                <li>Your chats are visible to you and the other person. If a chat is reported, the admins can read the reported messages.</li>
+                <li>Your email is visible only to admins.</li>
+                <li>We do not sell your information or use it for advertising.</li>
+            </ul>
+            <h4>4. Where it is stored</h4>
+            <p>Data is stored with our hosting and database provider, Supabase. We keep it while your account is active and delete it when an admin removes the account.</p>
+            <h4>5. Your rights</h4>
+            <p>You may ask to see, correct or delete your information, or withdraw your consent, by contacting the admins. Deleting your account removes your listings.</p>
+            <h4>6. Security</h4>
+            <p>We store passwords and recovery codes only as hashes, but no system is perfectly secure. Never share your password or recovery code, and do not put sensitive information in chats or listings.</p>
+            <h4>7. Changes</h4>
+            <p>We may update this policy and will show the latest version here.</p>`
+    }
+};
+
+let legalConsentMode = false;
+
+function showLegalTab(tab) {
+    const doc = LEGAL_DOCS[tab] || LEGAL_DOCS.terms;
+    document.querySelectorAll('.legal-tab').forEach(b => b.classList.toggle('active', b.dataset.legal === tab));
+    document.getElementById('legal-heading').textContent = doc.heading;
+    const body = document.getElementById('legal-body');
+    body.innerHTML = doc.html;
+    body.scrollTop = 0;
+}
+
+function openLegal(tab = 'terms', consent = false) {
+    legalConsentMode = consent;
+    document.getElementById('legal-consent').classList.toggle('hidden', !consent);
+    document.getElementById('legal-agree').checked = false;
+    document.getElementById('legal-accept-btn').disabled = true;
+    if (consent) document.getElementById('legal-heading').textContent = 'Before you join';
+    showLegalTab(tab);
+    if (consent) document.getElementById('legal-heading').textContent = 'Before you join';
+    openModal('legal-modal');
+}
+
+function closeLegal() {
+    closeModal('legal-modal');
+    if (legalConsentMode) pendingRegistration = null;
+    legalConsentMode = false;
+}
+
+function acceptLegalAndRegister() {
+    if (!document.getElementById('legal-agree').checked || !pendingRegistration) return;
+    const data = pendingRegistration;
+    pendingRegistration = null;
+    legalConsentMode = false;
+    closeModal('legal-modal');
+    createAccount(data);
+}
+
+document.getElementById('auth-year').textContent = new Date().getFullYear();
