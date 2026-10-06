@@ -1,0 +1,6 @@
+-- ============================================================
+-- DLSAU MARKETPLACE - SUPABASE SETUP
+-- Run this ONCE:
+--   Supabase Dashboard > SQL Editor > New query > paste > Run
+-- Everything below is idempotent (safe to re-run).
+-- ============================================================
