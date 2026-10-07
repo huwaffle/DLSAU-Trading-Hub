@@ -44,3 +44,11 @@ create index if not exists chats_buyer_idx on public.chats (buyer_name);
 create index if not exists chats_seller_idx on public.chats (seller_name);
 create index if not exists ratings_target_idx on public.ratings (target_user);
 create index if not exists products_owner_idx on public.products (owner);
+
+-- ------------------------------------------------------------
+-- 2. ROW LEVEL SECURITY
+--    The app uses the built-in demo login (no real accounts yet),
+--    so policies are open to the anon role. Anyone holding your
+--    publishable key can read/write these three tables - fine for
+--    a class project, NOT for real user data. Later you can add
+--    Supabase Auth and tighten these policies to auth.uid().
