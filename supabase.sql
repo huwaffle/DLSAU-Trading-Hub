@@ -52,3 +52,35 @@ create index if not exists products_owner_idx on public.products (owner);
 --    publishable key can read/write these three tables - fine for
 --    a class project, NOT for real user data. Later you can add
 --    Supabase Auth and tighten these policies to auth.uid().
+-- ------------------------------------------------------------
+
+alter table public.products enable row level security;
+alter table public.chats enable row level security;
+alter table public.ratings enable row level security;
+
+drop policy if exists "products_read" on public.products;
+drop policy if exists "products_insert" on public.products;
+drop policy if exists "products_update" on public.products;
+drop policy if exists "products_delete" on public.products;
+create policy "products_read"   on public.products for select to anon, authenticated using (true);
+create policy "products_insert" on public.products for insert to anon, authenticated with check (true);
+create policy "products_update" on public.products for update to anon, authenticated using (true);
+create policy "products_delete" on public.products for delete to anon, authenticated using (true);
+
+drop policy if exists "chats_read" on public.chats;
+drop policy if exists "chats_insert" on public.chats;
+drop policy if exists "chats_update" on public.chats;
+drop policy if exists "chats_delete" on public.chats;
+create policy "chats_read"   on public.chats for select to anon, authenticated using (true);
+create policy "chats_insert" on public.chats for insert to anon, authenticated with check (true);
+create policy "chats_update" on public.chats for update to anon, authenticated using (true);
+create policy "chats_delete" on public.chats for delete to anon, authenticated using (true);
+
+drop policy if exists "ratings_read" on public.ratings;
+drop policy if exists "ratings_insert" on public.ratings;
+drop policy if exists "ratings_update" on public.ratings;
+drop policy if exists "ratings_delete" on public.ratings;
+create policy "ratings_read"   on public.ratings for select to anon, authenticated using (true);
+create policy "ratings_insert" on public.ratings for insert to anon, authenticated with check (true);
+create policy "ratings_update" on public.ratings for update to anon, authenticated using (true);
+create policy "ratings_delete" on public.ratings for delete to anon, authenticated using (true);
