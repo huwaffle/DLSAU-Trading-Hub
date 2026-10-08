@@ -84,3 +84,33 @@ create policy "ratings_read"   on public.ratings for select to anon, authenticat
 create policy "ratings_insert" on public.ratings for insert to anon, authenticated with check (true);
 create policy "ratings_update" on public.ratings for update to anon, authenticated using (true);
 create policy "ratings_delete" on public.ratings for delete to anon, authenticated using (true);
+
+-- ------------------------------------------------------------
+-- 3. REALTIME (live updates across open browsers)
+--    Dashboard > Database > Replication must also be ON for the
+--    three tables (it is on by default on new projects).
+-- ------------------------------------------------------------
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'products'
+  ) then
+    alter publication supabase_realtime add table public.products;
+  end if;
+
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'chats'
+  ) then
+    alter publication supabase_realtime add table public.chats;
+  end if;
+
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'ratings'
+  ) then
+    alter publication supabase_realtime add table public.ratings;
+  end if;
+end $$;
