@@ -114,3 +114,34 @@ begin
     alter publication supabase_realtime add table public.ratings;
   end if;
 end $$;
+
+-- ------------------------------------------------------------
+-- 4. DEMO DATA (only inserted if the tables are empty)
+--    Thumbnails are inline SVG data-URIs, so no files needed.
+--    Skip this block if you want the marketplace to start empty.
+-- ------------------------------------------------------------
+
+insert into public.products (title, category, description, owner, status, image)
+select * from (values
+  ('Wireless Headphones', 'Electronics', 'Barely used Bluetooth headphones with noise cancellation and a carry pouch.', 'Juan Dela Cruz', 'Available',
+   'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22600%22%20height=%22450%22%3E%3Crect%20width=%22600%22%20height=%22450%22%20fill=%22%232563eb%22/%3E%3Ctext%20x=%22300%22%20y=%22230%22%20fill=%22%23ffffff%22%20font-size=%2228%22%20text-anchor=%22middle%22%3EWireless%20Headphones%3C/text%3E%3C/svg%3E'),
+  ('Scientific Calculator', 'School Supplies', 'Casio FX-991EX, perfect for engineering and math subjects. Fully working.', 'Maria Santos', 'Available',
+   'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22600%22%20height=%22450%22%3E%3Crect%20width=%22600%22%20height=%22450%22%20fill=%22%23059669%22/%3E%3Ctext%20x=%22300%22%20y=%22230%22%20fill=%22%23ffffff%22%20font-size=%2228%22%20text-anchor=%22middle%22%3EScientific%20Calculator%3C/text%3E%3C/svg%3E'),
+  ('DLSAU Hoodie', 'Clothing & Accessories', 'Official campus hoodie, medium size, worn only twice.', 'Paolo Reyes', 'Available',
+   'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22600%22%20height=%22450%22%3E%3Crect%20width=%22600%22%20height=%22450%22%20fill=%22%237c3aed%22/%3E%3Ctext%20x=%22300%22%20y=%22230%22%20fill=%22%23ffffff%22%20font-size=%2228%22%20text-anchor=%22middle%22%3EDLSAU%20Hoodie%3C/text%3E%3C/svg%3E'),
+  ('Badminton Racket Set', 'Sports & Hobbies', 'Two rackets and three shuttlecocks in a carry bag. Great for P.E. or weekend play.', 'Juan Dela Cruz', 'Available',
+   'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22600%22%20height=%22450%22%3E%3Crect%20width=%22600%22%20height=%22450%22%20fill=%22%23d97706%22/%3E%3Ctext%20x=%22300%22%20y=%22230%22%20fill=%22%23ffffff%22%20font-size=%2228%22%20text-anchor=%22middle%22%3EBadminton%20Racket%20Set%3C/text%3E%3C/svg%3E'),
+  ('Calculus Notes & Reviewers', 'School Supplies', 'Complete handwritten reviewers for MATH 101 - 140 pages, photocopied.', 'Maria Santos', 'Available',
+   'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22600%22%20height=%22450%22%3E%3Crect%20width=%22600%22%20height=%22450%22%20fill=%22%23dc2626%22/%3E%3Ctext%20x=%22300%22%20y=%22230%22%20fill=%22%23ffffff%22%20font-size=%2228%22%20text-anchor=%22middle%22%3ECalculus%20Notes%20%26%20Reviewers%3C/text%3E%3C/svg%3E'),
+  ('Mechanical Keyboard', 'Electronics', 'Hot-swappable switches, RGB backlight, includes original box and cable.', 'Paolo Reyes', 'Sold',
+   'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22600%22%20height=%22450%22%3E%3Crect%20width=%22600%22%20height=%22450%22%20fill=%22%230891b2%22/%3E%3Ctext%20x=%22300%22%20y=%22230%22%20fill=%22%23ffffff%22%20font-size=%2228%22%20text-anchor=%22middle%22%3EMechanical%20Keyboard%3C/text%3E%3C/svg%3E')
+) as v(title, category, description, owner, status, image)
+where not exists (select 1 from public.products);
+
+insert into public.ratings (target_user, rated_by, rating, comment) values
+  ('Juan Dela Cruz', 'Maria Santos', 5, 'Item was exactly as described and he delivered it right after class. Super bait!'),
+  ('Juan Dela Cruz', 'Paolo Reyes', 4, 'Good condition, replied fast. Packaging could be better.'),
+  ('Maria Santos', 'Juan Dela Cruz', 5, 'Very easy to deal with, no issues at all.'),
+  ('Maria Santos', 'Paolo Reyes', 4, 'Friendly seller, item was clean and complete.'),
+  ('Paolo Reyes', 'Maria Santos', 5, 'Honest and reliable. 10/10 would buy from again.')
+on conflict (target_user, rated_by) do nothing;
