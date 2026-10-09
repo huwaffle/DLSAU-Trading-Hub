@@ -145,3 +145,100 @@ insert into public.ratings (target_user, rated_by, rating, comment) values
   ('Maria Santos', 'Paolo Reyes', 4, 'Friendly seller, item was clean and complete.'),
   ('Paolo Reyes', 'Maria Santos', 5, 'Honest and reliable. 10/10 would buy from again.')
 on conflict (target_user, rated_by) do nothing;
+
+-- ============================================================
+-- 5. UPDATE: listing approval, chat "seen", accounts, notifications, reports
+--    (idempotent - safe to re-run)
+-- ============================================================
+
+-- 5a. Listing approval. Existing listings are grandfathered in as approved;
+--     every new listing starts as 'pending' until an admin reviews it.
+alter table public.products add column if not exists approval text;
+alter table public.products add column if not exists reject_reason text;
+update public.products set approval = 'approved' where approval is null;
+alter table public.products alter column approval set default 'pending';
+alter table public.products alter column approval set not null;
+
+-- 5b. Chat "seen": { "username": number of messages that person has seen }
+alter table public.chats add column if not exists seen jsonb not null default '{}'::jsonb;
+
+-- 5c. Accounts (so the admin dashboard can list and manage them)
+create table if not exists public.accounts (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  email text not null,
+  pass_hash text not null,
+  suspended boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create unique index if not exists accounts_name_idx on public.accounts (lower(name));
+create unique index if not exists accounts_email_idx on public.accounts (lower(email));
+
+-- 5d. Notifications (listing approved / rejected, etc.)
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  recipient text not null,
+  type text not null default 'info',
+  title text not null,
+  body text,
+  read boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists notifications_recipient_idx on public.notifications (recipient);
+
+-- 5e. Reports sent from the chat window
+create table if not exists public.reports (
+  id uuid primary key default gen_random_uuid(),
+  reporter text not null,
+  reported_user text not null,
+  item_title text,
+  reason text not null,
+  details text,
+  transcript jsonb not null default '[]'::jsonb,
+  status text not null default 'open',
+  created_at timestamptz not null default now()
+);
+
+alter table public.accounts enable row level security;
+alter table public.notifications enable row level security;
+alter table public.reports enable row level security;
+
+drop policy if exists "accounts_read" on public.accounts;
+drop policy if exists "accounts_insert" on public.accounts;
+drop policy if exists "accounts_update" on public.accounts;
+drop policy if exists "accounts_delete" on public.accounts;
+create policy "accounts_read"   on public.accounts for select to anon, authenticated using (true);
+create policy "accounts_insert" on public.accounts for insert to anon, authenticated with check (true);
+create policy "accounts_update" on public.accounts for update to anon, authenticated using (true);
+create policy "accounts_delete" on public.accounts for delete to anon, authenticated using (true);
+
+drop policy if exists "notifications_read" on public.notifications;
+drop policy if exists "notifications_insert" on public.notifications;
+drop policy if exists "notifications_update" on public.notifications;
+drop policy if exists "notifications_delete" on public.notifications;
+create policy "notifications_read"   on public.notifications for select to anon, authenticated using (true);
+create policy "notifications_insert" on public.notifications for insert to anon, authenticated with check (true);
+create policy "notifications_update" on public.notifications for update to anon, authenticated using (true);
+create policy "notifications_delete" on public.notifications for delete to anon, authenticated using (true);
+
+drop policy if exists "reports_read" on public.reports;
+drop policy if exists "reports_insert" on public.reports;
+drop policy if exists "reports_update" on public.reports;
+drop policy if exists "reports_delete" on public.reports;
+create policy "reports_read"   on public.reports for select to anon, authenticated using (true);
+create policy "reports_insert" on public.reports for insert to anon, authenticated with check (true);
+create policy "reports_update" on public.reports for update to anon, authenticated using (true);
+create policy "reports_delete" on public.reports for delete to anon, authenticated using (true);
+
+do $$
+declare t text;
+begin
+  foreach t in array array['accounts', 'notifications', 'reports'] loop
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    end if;
+  end loop;
+end $$;
