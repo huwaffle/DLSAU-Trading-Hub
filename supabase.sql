@@ -250,3 +250,10 @@ end $$;
 --      Authentication > Providers > Email: keep "Confirm email" ON.
 --      Authentication > URL Configuration: set Site URL to where the site is hosted and
 --      add the same address under Redirect URLs (links in emails return there).
+-- ============================================================
+alter table public.accounts alter column pass_hash drop not null;
+
+-- ============================================================
+-- 7. UPDATE: accounts are stored in public.accounts again (no email sending / Supabase Auth)
+--    pass_hash holds the salted SHA-256 password hash; recovery_hash holds the hashed
+--    recovery code that lets a user reset a forgotten password on the website.
