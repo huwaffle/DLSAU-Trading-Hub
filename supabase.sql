@@ -242,3 +242,11 @@ begin
     end if;
   end loop;
 end $$;
+
+-- ============================================================
+-- 6. UPDATE: real accounts with Supabase Auth (email verification + password reset)
+--    Passwords now live in Supabase Auth, so accounts.pass_hash is no longer required.
+--    Also do this in the Supabase dashboard:
+--      Authentication > Providers > Email: keep "Confirm email" ON.
+--      Authentication > URL Configuration: set Site URL to where the site is hosted and
+--      add the same address under Redirect URLs (links in emails return there).
