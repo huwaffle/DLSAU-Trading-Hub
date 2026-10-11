@@ -20,3 +20,19 @@ Think of it as a campus garage sale that never closes.
 - Use the admin dashboard to approve listings and manage accounts
 
 ---
+
+## Try it as a guest (tester account)
+
+If you just want to look around, sign in with the shared tester account:
+
+| Username | Password |
+| -------- | -------- |
+| `tester` | `tester` |
+
+This account is meant for guests and demos, so feel free to post, chat, and explore
+with it.
+
+> Heads up: if `tester` doesn't work yet, it just needs to be created once. See the
+> "Create the tester account" note below.
+
+---
