@@ -58,3 +58,38 @@ the data lives in the cloud.
 4. It opens at `http://127.0.0.1:5501` and reloads automatically when you save changes.
 
 ---
+
+## The database part (one-time setup)
+
+All the shared data (listings, chats, ratings) lives in Supabase, a free cloud
+database. The project already points to one, so you can skip this entirely if you
+just want to try it out.
+
+But if you want your own copy with your own database:
+
+1. Make a free account at supabase.com and create a new project.
+2. In your project, open SQL Editor, then New query.
+3. Paste the entire contents of `supabase.sql` and click Run.
+   (It's safe to run more than once, and it even adds some demo listings and reviews.)
+4. Grab your project's URL and publishable (anon) key from Settings, then API.
+5. Open `script.js` and find this near the top (around line 153):
+
+   ```js
+   const SUPABASE_URL = 'https://your-project.supabase.co';
+   const SUPABASE_PUBLISHABLE_KEY = 'your-key-here';
+   ```
+
+   Replace them with your own values and save. Done.
+
+Note: the current database keys are wide open on purpose (this is a class project).
+Don't put real, private, or sensitive info in here, and if you ever go live for real,
+tighten the security rules in `supabase.sql`.
+
+### Create the tester account
+
+Accounts are stored in the database, so the `tester` account has to exist before it
+can be used. If it isn't there yet, just open the app, click "Create Account", and
+register a user named `tester` with the password `tester`. You only need to do this
+once, and then anyone can sign in with it.
+
+---
