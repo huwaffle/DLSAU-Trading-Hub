@@ -36,3 +36,25 @@ with it.
 > "Create the tester account" note below.
 
 ---
+
+## Getting it running (it's easy, promise)
+
+This is a plain website. No installing, no compiling, no "npm install" headaches.
+It's just HTML, CSS, and JavaScript.
+
+### Option 1: Just open it (fastest)
+
+1. Download or clone this folder.
+2. Double-click `index.html`.
+
+That's it. The app opens in your browser. You'll need an internet connection, since
+the data lives in the cloud.
+
+### Option 2: Use VS Code Live Server (nicer for editing)
+
+1. Open the folder in VS Code.
+2. Install the Live Server extension (by Ritwick Dey).
+3. Right-click `index.html` and choose "Open with Live Server".
+4. It opens at `http://127.0.0.1:5501` and reloads automatically when you save changes.
+
+---
