@@ -107,3 +107,20 @@ manage accounts, and read reports. Change this login in `script.js` under
 `ADMIN_LOGIN` before showing it to the world.
 
 ---
+
+## What's in the box?
+
+| File | What it does |
+| ---- | ------------ |
+| `index.html` | The whole page structure: screens, tabs, and popups |
+| `style.css`  | All the looks (colors, layout, animations) |
+| `script.js`  | The brains: login, listings, chat, ratings, admin, and all the text |
+| `feedback.js` | Pop-up toasts and confirmation dialogs |
+| `background.js` | The animated green constellation of stars in the background |
+| `supabase.sql` | One-time database setup (run this in Supabase) |
+
+Want to change wording? Almost all messages live in the `MESSAGES` object at the top
+of `script.js`. The developer names show up in the `TEAM` list, and plain text in
+`index.html` can be edited directly. There are handy comment guides throughout.
+
+---
