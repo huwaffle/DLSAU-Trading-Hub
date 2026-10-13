@@ -93,3 +93,17 @@ register a user named `tester` with the password `tester`. You only need to do t
 once, and then anyone can sign in with it.
 
 ---
+
+## Try the admin side
+
+Want to peek at the admin dashboard? Sign in with:
+
+| Username | Password |
+| -------- | -------- |
+| `admin`  | `admin`  |
+
+You'll get a shield icon in the top bar where you can approve or reject listings,
+manage accounts, and read reports. Change this login in `script.js` under
+`ADMIN_LOGIN` before showing it to the world.
+
+---
