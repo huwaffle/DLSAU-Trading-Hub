@@ -257,3 +257,5 @@ alter table public.accounts alter column pass_hash drop not null;
 -- 7. UPDATE: accounts are stored in public.accounts again (no email sending / Supabase Auth)
 --    pass_hash holds the salted SHA-256 password hash; recovery_hash holds the hashed
 --    recovery code that lets a user reset a forgotten password on the website.
+-- ============================================================
+alter table public.accounts add column if not exists recovery_hash text;
