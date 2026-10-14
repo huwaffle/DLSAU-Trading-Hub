@@ -124,3 +124,12 @@ of `script.js`. The developer names show up in the `TEAM` list, and plain text i
 `index.html` can be edited directly. There are handy comment guides throughout.
 
 ---
+
+## Built with
+
+- Plain HTML, CSS, and JavaScript (no frameworks)
+- Supabase for the cloud database and live updates
+- Lucide for the icons
+- Google Fonts (Instrument Serif, Manrope, Space Grotesk)
+
+---
