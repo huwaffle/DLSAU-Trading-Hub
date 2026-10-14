@@ -568,10 +568,11 @@ function switchMainTab(tabName) {
 // 6. NAVIGATION - categories and search
 // ==========================================================
 function setupCategoryListeners() {
-    const items = document.querySelectorAll('#category-filter-list .category-item, #category-chips .category-item');
+    const items = document.querySelectorAll('#category-filter-list .category-item, .category-chips .category-item');
     items.forEach(item => {
         item.addEventListener('click', () => {
             selectedCategory = item.getAttribute('data-category');
+            if (document.getElementById('tab-home-view').classList.contains('hidden')) switchMainTab('home');
             items.forEach(i => i.classList.toggle('active', i.getAttribute('data-category') === selectedCategory));
             item.scrollIntoView?.({ block: 'nearest', inline: 'center' });
             document.getElementById('current-category-title').innerText = selectedCategory === 'All' ? 'Market Listings' : `${selectedCategory} Listings`;

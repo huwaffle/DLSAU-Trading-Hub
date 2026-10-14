@@ -17,7 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
     <div class="top-progress hidden" id="top-progress" role="progressbar" aria-label="Loading"><span id="top-progress-fill"></span></div>
@@ -239,6 +239,15 @@
             <!-- B3. HOME TAB - hero banner + product listings
                  Edit the hero headline and subtitle here. -->
             <!-- ========================================================== -->
+            <ul class="category-chips" id="category-chips" aria-label="Categories">
+                <li class="category-item active" data-category="All"><i data-lucide="grid"></i> All</li>
+                <li class="category-item" data-category="School Supplies"><i data-lucide="pencil-ruler"></i> School Supplies</li>
+                <li class="category-item" data-category="Electronics"><i data-lucide="cpu"></i> Electronics</li>
+                <li class="category-item" data-category="Clothing &amp; Accessories"><i data-lucide="shirt"></i> Clothing &amp; Accessories</li>
+                <li class="category-item" data-category="Sports &amp; Hobbies"><i data-lucide="dumbbell"></i> Sports &amp; Hobbies</li>
+                <li class="category-item" data-category="Other"><i data-lucide="ellipsis"></i> Other</li>
+            </ul>
+
             <main class="app-content" id="tab-home-view">
                 <section class="hero" aria-label="Welcome">
                     <div class="hero-text">
@@ -257,7 +266,7 @@
                         <circle cx="55" cy="55" r="14" fill="#0A7A4B"/>
                     </svg>
                 </section>
-                <ul class="category-chips" id="category-chips" aria-label="Categories">
+                <ul class="category-chips" aria-label="Categories">
                     <li class="category-item active" data-category="All"><i data-lucide="grid"></i> All</li>
                     <li class="category-item" data-category="School Supplies"><i data-lucide="pencil-ruler"></i> School Supplies</li>
                     <li class="category-item" data-category="Electronics"><i data-lucide="cpu"></i> Electronics</li>
@@ -802,7 +811,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="feedback.js"></script>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=4"></script>
     <script src="background.js"></script>
 </body>
 </html>
