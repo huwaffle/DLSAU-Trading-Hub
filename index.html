@@ -257,6 +257,14 @@
                         <circle cx="55" cy="55" r="14" fill="#0A7A4B"/>
                     </svg>
                 </section>
+                <ul class="category-chips" id="category-chips" aria-label="Categories">
+                    <li class="category-item active" data-category="All"><i data-lucide="grid"></i> All</li>
+                    <li class="category-item" data-category="School Supplies"><i data-lucide="pencil-ruler"></i> School Supplies</li>
+                    <li class="category-item" data-category="Electronics"><i data-lucide="cpu"></i> Electronics</li>
+                    <li class="category-item" data-category="Clothing &amp; Accessories"><i data-lucide="shirt"></i> Clothing &amp; Accessories</li>
+                    <li class="category-item" data-category="Sports &amp; Hobbies"><i data-lucide="dumbbell"></i> Sports &amp; Hobbies</li>
+                    <li class="category-item" data-category="Other"><i data-lucide="ellipsis"></i> Other</li>
+                </ul>
                 <div class="section-header">
                     <h3 id="current-category-title">Market Listings</h3>
                     <span class="item-count" id="item-count">0 Products Available</span>
@@ -290,6 +298,7 @@
 
                         <div class="chat-active-view hidden" id="chat-active-view">
                             <div class="chat-header">
+                                <button type="button" class="icon-btn chat-back-btn" onclick="closeChatPanel()" aria-label="Back to conversations" title="Back"><i data-lucide="arrow-left" aria-hidden="true"></i></button>
                                 <div class="chat-user-details" style="cursor: pointer;" onclick="openSellerProfileFromChat()">
                                     <div class="avatar" id="chat-recipient-avatar">--</div>
                                     <div>
@@ -301,7 +310,6 @@
                                     <button type="button" class="glass-btn rate-btn" id="chat-rate-btn" onclick="toggleChatRate()" aria-haspopup="dialog" aria-expanded="false" aria-controls="chat-rate-panel" title="Rate this user">
                                         <i data-lucide="star" aria-hidden="true"></i> <span id="chat-rate-label">Rate</span>
                                     </button>
-                                    <button type="button" class="icon-btn chat-back-btn" onclick="closeChatPanel()" aria-label="Back to conversations" title="Back"><i data-lucide="arrow-left" aria-hidden="true"></i></button>
                                     <button type="button" class="icon-btn danger-hover" id="chat-report-btn" onclick="openReportModal()" aria-label="Report this user" title="Report this user">
                                         <i data-lucide="flag" aria-hidden="true"></i>
                                     </button>

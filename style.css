@@ -1802,7 +1802,26 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .notif-delete:hover { background: var(--error-soft); color: var(--error); }
 .notif-clear { margin-left: auto; margin-right: 10px; padding: 5px 12px; font-size: 12px; }
-.chat-back-btn { display: none; }
+.chat-back-btn { display: none; flex-shrink: 0; align-items: center; justify-content: center; }
+.chat-header .chat-user-details { flex: 1; min-width: 0; }
+.chat-header .chat-user-details > div:last-child { min-width: 0; }
+.chat-header .chat-user-details h4, .chat-header .chat-user-details p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.category-chips { display: none; list-style: none; }
+@media (max-width: 768px) {
+    .category-chips {
+        display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 12px; margin: 0 0 6px;
+        scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    .category-chips::-webkit-scrollbar { display: none; }
+    .category-chips .category-item {
+        flex: 0 0 auto; white-space: nowrap; padding: 8px 14px; border-radius: 999px;
+        background: var(--surface); border: 1px solid var(--line); font-size: 13px;
+    }
+    .category-chips .category-item::before { display: none; }
+    .category-chips .category-item:hover { transform: none; }
+    .category-chips .category-item.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .category-chips .category-item.active i, .category-chips .category-item.active svg { color: #fff; }
+}
 
 body { overflow-x: hidden; }
 img, svg { max-width: 100%; }
