@@ -133,3 +133,11 @@ of `script.js`. The developer names show up in the `TEAM` list, and plain text i
 - Google Fonts (Instrument Serif, Manrope, Space Grotesk)
 
 ---
+
+## Made by
+
+A group of DLSAU students who wanted trading on campus to be a little easier:
+
+Carlos Alcantara, Justine Garma, Cyril Rodriguez, Jose Gabo, Justin Encarnado, Kyler Santos
+
+Enjoy, and happy trading.
