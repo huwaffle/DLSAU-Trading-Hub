@@ -33,7 +33,7 @@ const MESSAGES = {
     ratingUpdated: (seller, score) => `Updated your rating for ${seller} to ${score} ${score === 1 ? 'star' : 'stars'}.`,
     ratingRemoved: seller => `Removed your rating for ${seller}.`,
 
-    listingSubmitted: 'Listing submitted! It will appear on the marketplace once an admin approves it.',
+    listingSubmitted: 'Listing submitted! It will appear on the trading hub once an admin approves it.',
     reportSent: name => `Your report about ${name} was sent to the admins.`,
     listingApproved: title => `"${title}" was approved.`,
     listingRejected: title => `"${title}" was rejected.`,
@@ -51,7 +51,7 @@ const MESSAGES = {
     // --- Info toasts ---
     wishlistAdded: 'Added to Wishlist',
     wishlistRemoved: 'Removed from Wishlist',
-    statusChanged: status => `Item marked as ${status}`,
+    statusChanged: status => `Item marked as ${status === 'Sold' ? 'Traded' : status}`,
     listingRemoved: title => `"${title}" was removed.`,
     chatOpened: owner => `Conversation opened with ${owner}`,
     newMessage: name => `New message from ${name}`,
@@ -64,7 +64,7 @@ const MESSAGES = {
     loadFailed: reason => 'Could not load data: ' + reason,
     saveFailed: reason => 'Could not save data: ' + reason,
     cannotRateSelf: 'You cannot rate yourself!',
-    cannotBuyOwn: 'You cannot buy or message your own listing!',
+    cannotBuyOwn: 'You cannot message your own listing!',
     cannotEditOthers: 'You can only edit listings that you posted.',
     notApproved: 'This listing has not been approved yet.',
     accountSuspended: 'This account has been suspended. Contact an admin.',
@@ -78,7 +78,7 @@ const MESSAGES = {
     noReviews: 'No written reviews yet.',
 
     // --- Empty listing messages ---
-    emptyMarket: 'No items have been posted yet. Be the first to sell something!',
+    emptyMarket: 'No items have been listed yet. Be the first to list something!',
     emptyFilter: 'No products found under your filter criteria.',
 
     // --- Loading button labels ---
@@ -99,7 +99,7 @@ const MESSAGES = {
         ],
         deleteYes: 'Delete forever',
         logoutTitle: 'Sign out?',
-        logoutBody: 'You will need to sign in again to buy, sell or chat.',
+        logoutBody: 'You will need to sign in again to list items or chat.',
         logoutYes: 'Sign out',
         deleteMessageTitle: 'Delete this message?',
         deleteMessageBody: 'This message will be removed from the conversation for both of you.',
@@ -120,7 +120,7 @@ const MESSAGES = {
         loginInvalid: 'Incorrect password. Please try again.',
         loginNoAccount: 'No account found with this username or email. Create an account first.',
         regName: 'Username is required.',
-        regNameInvalid: 'Use 3-20 letters, numbers, dots or underscores (no spaces).',
+        regNameInvalid: 'Pick a short name of 3-20 characters, like "james". Letters, numbers, dots and underscores only (no spaces).',
         regEmailEmpty: 'Email is required.',
         regEmailInvalid: 'Use your DLSAU email address, for example name@dlsau.edu.ph.',
         regEmailTaken: 'An account with this email already exists. Try logging in.',
@@ -169,6 +169,8 @@ const postedLabel = iso => {
     const when = days < 1 ? 'Today' : days === 1 ? 'Yesterday' : days < 7 ? `${days} days ago` : new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
     return `Posted ${when}`;
 };
+const CATEGORY_ICONS = { 'School Supplies': 'pencil-ruler', 'Electronics': 'cpu', 'Clothing & Accessories': 'shirt', 'Sports & Hobbies': 'dumbbell', 'Other': 'ellipsis' };
+const categoryBadgeHTML = prod => prod.category ? `<span class="category-badge" data-category="${escapeHTML(prod.category)}" title="${escapeHTML(prod.category)}" aria-label="Category: ${escapeHTML(prod.category)}"><i data-lucide="${CATEGORY_ICONS[prod.category] || 'tag'}"></i></span>` : '';
 const postedHTML = prod => prod.createdAt ? `<div class="card-date" title="${new Date(prod.createdAt).toLocaleString()}"><i data-lucide="calendar"></i> ${postedLabel(prod.createdAt)}</div>` : '';
 
 const rowToProduct = r => ({
@@ -287,6 +289,7 @@ async function loadRatings() {
     if (currentTargetSeller) renderSellerModalRating(currentTargetSeller);
     renderProducts();
     renderWishlist();
+    if (isAdminUser()) renderAdmin();
 }
 
 async function loadNotifications() {
@@ -585,7 +588,7 @@ function setupCategoryListeners() {
             if (document.getElementById('tab-home-view').classList.contains('hidden')) switchMainTab('home');
             items.forEach(i => i.classList.toggle('active', i.getAttribute('data-category') === selectedCategory));
             item.scrollIntoView?.({ block: 'nearest', inline: 'center' });
-            document.getElementById('current-category-title').innerText = selectedCategory === 'All' ? 'Market Listings' : `${selectedCategory} Listings`;
+            document.getElementById('current-category-title').innerText = selectedCategory === 'All' ? 'All Listings' : `${selectedCategory} Listings`;
             renderProducts();
         });
     });
@@ -616,19 +619,25 @@ function switchAuthTab(tab) {
 
     const current = AUTH_ORDER.find(name => !forms[name].classList.contains('hidden'));
     const next = forms[tab] ? tab : 'login';
-    card.dataset.view = next;
+    const welcome = card.querySelector('.auth-welcome');
+    const startHeight = card.offsetHeight;
 
-    // Tab buttons and the sliding pill
-    tabsContainer.style.display = next === 'forgot' ? 'none' : 'flex';
+    const animate = current && current !== next
+        && !document.getElementById('auth-overlay').classList.contains('hidden')
+        && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Heading, tab bar and footer follow the view; in an animated switch this waits until the old form has faded out
+    const applyChrome = () => {
+        card.dataset.view = next;
+        tabsContainer.style.display = next === 'forgot' ? 'none' : 'flex';
+    };
+    // Tab buttons and the sliding pill move straight away
     tabsContainer.dataset.tab = next;
     tabs[0].classList.toggle('active', next === 'login');
     tabs[1].classList.toggle('active', next === 'register');
 
     const showOnly = name => AUTH_ORDER.forEach(n => forms[n].classList.toggle('hidden', n !== name));
-
-    const animate = current && current !== next
-        && !document.getElementById('auth-overlay').classList.contains('hidden')
-        && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!animate) applyChrome();
 
     const shell = document.querySelector('.auth-shell');
     const art = document.querySelector('.auth-art');
@@ -639,8 +648,8 @@ function switchAuthTab(tab) {
         if (animate) {
             const a1 = art.getBoundingClientRect(), c1 = card.getBoundingClientRect();
             const slide = (el, from, to) => el.animate(
-                [{ transform: `translateX(${from.left - to.left}px)`, zIndex: 2 }, { transform: 'translateX(0)', zIndex: 2 }],
-                { duration: 700, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' });
+                [{ transform: `translateX(${from.left - to.left}px)` }, { transform: 'translateX(0)' }],
+                { duration: 800, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' });
             slide(art, a0, a1);
             slide(card, c0, c1);
         }
@@ -655,29 +664,33 @@ function switchAuthTab(tab) {
     const ease = 'cubic-bezier(0.22, 0.61, 0.36, 1)';
     const oldForm = forms[current];
     const newForm = forms[next];
-    const startHeight = card.offsetHeight;
 
     authSwitchToken = (authSwitchToken || 0) + 1;
     const token = authSwitchToken;
     card.style.pointerEvents = 'none';
 
-    oldForm.animate(
+    // Going to or from Forgot Password also fades the heading and tab bar so nothing pops in or out
+    const chromeEls = current === 'forgot' || next === 'forgot' ? [tabsContainer, welcome] : [];
+    const fade = (els, keyframes, options) => Promise.all(els.map(el => el.animate(keyframes, options).finished));
+
+    fade([oldForm, ...chromeEls.filter(() => next === 'forgot')],
         [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: `translateX(${-24 * dir}px)` }],
-        { duration: 160, easing: 'ease-in', fill: 'forwards' }
-    ).finished.then(() => {
+        { duration: 260, easing: 'ease-in', fill: 'forwards' }
+    ).then(() => {
         if (token !== authSwitchToken) return;
         showOnly(next);
-        oldForm.getAnimations().forEach(a => a.cancel());
+        applyChrome();
+        [oldForm, ...chromeEls].forEach(el => el.getAnimations().forEach(a => a.cancel()));
         const endHeight = card.offsetHeight;
 
         card.style.overflow = 'hidden';
-        card.animate([{ height: startHeight + 'px' }, { height: endHeight + 'px' }], { duration: 280, easing: ease })
+        card.animate([{ height: startHeight + 'px' }, { height: endHeight + 'px' }], { duration: 520, easing: ease })
             .finished.finally(() => { card.style.overflow = ''; card.style.pointerEvents = ''; });
-        newForm.animate(
+        fade([newForm, ...chromeEls.filter(() => next !== 'forgot')],
             [{ opacity: 0, transform: `translateX(${24 * dir}px)` }, { opacity: 1, transform: 'translateX(0)' }],
-            { duration: 280, easing: ease }
+            { duration: 520, easing: ease }
         );
-    }).catch(() => { showOnly(next); card.style.pointerEvents = ''; });
+    }).catch(() => { showOnly(next); applyChrome(); card.style.pointerEvents = ''; });
 }
 let authSwitchToken = 0;
 
@@ -931,6 +944,7 @@ function initUserSession() {
     notifications = null;
     renderNotifications();
     document.getElementById('app-layout').classList.toggle('admin-mode', admin);
+    document.getElementById('my-rating-box').classList.toggle('hidden', admin);
     if (admin) switchMainTab('admin');
 
     activeChatId = null;
@@ -1009,11 +1023,13 @@ function performLogout() {
     accountRestriction = null;
     document.getElementById('restricted-overlay').classList.add('hidden');
     currentUser = null;
+    updateTabTitle();
     wishlist = [];
     activeChatId = null;
     prevUnread = null;
     paintUnreadBadges(0);
     document.getElementById('app-layout').classList.remove('admin-mode');
+    document.getElementById('my-rating-box').classList.remove('hidden');
     currentTargetSeller = null;
     notifications = null;
     adminAccounts = [];
@@ -1106,7 +1122,7 @@ function updateMyProfileRatingDisplay() {
     renderRatingSummary(document.getElementById('my-rating-summary'), stats);
     renderReviewList(document.getElementById('my-reviews'), stats, currentUser.name);
     const roleLabel = document.getElementById('user-role-label');
-    if (roleLabel) roleLabel.textContent = stats.count ? `${currentUser.role} \u00b7 ${stats.average.toFixed(1)} \u2605` : currentUser.role;
+    if (roleLabel) roleLabel.innerHTML = stats.count ? `${escapeHTML(currentUser.role)} &middot; ${stats.average.toFixed(1)} <span class="role-star">${starSVG(true, 12)}</span>` : escapeHTML(currentUser.role);
 }
 
 // ==========================================================
@@ -1261,7 +1277,7 @@ function getChatPartnerName() {
 function getChatPartnerRole() {
     const chat = globalChats.find(c => c.id === activeChatId);
     if (!chat || !currentUser) return 'user';
-    return chat.buyerName === currentUser.name ? 'seller' : 'buyer';
+    return chat.buyerName === currentUser.name ? 'owner' : 'member';
 }
 
 function paintChatStars(upTo) {
@@ -1467,7 +1483,7 @@ function renderProducts() {
     const listed = visibleProducts();
     const filtered = listed.filter(p => {
         if (selectedCategory !== 'All' && p.category !== selectedCategory) return false;
-        if (searchQuery && !p.title.toLowerCase().includes(searchQuery) && !p.owner.toLowerCase().includes(searchQuery)) return false;
+        if (searchQuery && ![p.title, p.owner, p.category].some(v => (v || '').toLowerCase().includes(searchQuery))) return false;
         return true;
     });
 
@@ -1504,18 +1520,18 @@ function renderProducts() {
             const approved = isApproved(prod);
             const statusToggleBtn = isOwnProduct && approved
                 ? `<button class="glass-btn" onclick="toggleProductStatus('${prod.id}', '${prod.status || 'Available'}')" style="font-size: 11px; padding: 4px 8px; background: ${isSold ? '#C8E6C9' : '#FFF'};">
-                        ${isSold ? 'Sold' : 'Active'}
+                        ${isSold ? 'Traded' : 'Active'}
                    </button>`
                 : '';
 
             const buyButton = isOwnProduct && !approved
                 ? `<button class="glass-btn disabled-btn" disabled>${prod.approval === 'rejected' ? 'Rejected' : 'Pending review'}</button>`
                 : isOwnProduct 
-                ? `<button class="glass-btn primary-btn disabled-btn" disabled title="You cannot buy your own product">
+                ? `<button class="glass-btn primary-btn disabled-btn" disabled title="This is your own listing">
                         <i data-lucide="tag"></i> Your Item
                    </button>` 
                 : isSold 
-                ? `<button class="glass-btn disabled-btn" disabled>Sold Out</button>`
+                ? `<button class="glass-btn disabled-btn" disabled>Traded</button>`
                 : `<button class="glass-btn primary-btn" onclick="buyItemAndStartChat('${prod.id}')">
                         <i data-lucide="message-square"></i> Chat
                    </button>`;
@@ -1533,23 +1549,86 @@ function renderProducts() {
                 ${prod.approval === 'rejected' && prod.rejectReason ? `<div class="reject-note">Reason: ${escapeHTML(prod.rejectReason)}. Edit the listing to resubmit it.</div>` : ''}
                 <div class="card-owner" onclick="openSellerProfile('${prod.owner}')">
                     <i data-lucide="user" style="width: 12px; height: 12px;"></i>
-                    Seller: ${prod.owner}${isOwnProduct ? ' (You)' : ''} <i data-lucide="star" class="inline-star"></i> ${sellerStats.count ? sellerStats.average.toFixed(1) : 'New'} ${isSold ? ' • [SOLD]' : ''}
+                    Listed by: ${prod.owner}${isOwnProduct ? ' (You)' : ''} <i data-lucide="star" class="inline-star"></i> ${sellerStats.count ? sellerStats.average.toFixed(1) : 'New'} ${isSold ? ' • [TRADED]' : ''}
                 </div>
                 <div class="card-footer">
                     <div class="card-actions">
                         ${statusToggleBtn}
                         ${editBtn}
                         ${deleteBtn}
+                        ${categoryBadgeHTML(prod)}
                         ${buyButton}
                     </div>
                 </div>
             `;
+            makeCardOpenDetails(card, prod.id);
             grid.appendChild(card);
         });
     }
 
     document.getElementById('item-count').innerText = `${filtered.length} Products Available`;
     lucide.createIcons();
+}
+
+// ==========================================================
+// 9. PRODUCTS - listing details popup (click a card to see the full photo and description)
+// ==========================================================
+let detailProductId = null;
+
+function makeCardOpenDetails(card, productId) {
+    card.classList.add('listing-card-clickable');
+    card.addEventListener('click', e => {
+        if (e.target.closest('button, a, .card-owner')) return;
+        openListingDetail(productId);
+    });
+}
+
+function openListingDetail(id) {
+    const prod = products.find(p => p.id === id);
+    if (!prod) return;
+    detailProductId = id;
+
+    const isOwn = currentUser && prod.owner === currentUser.name;
+    const approved = isApproved(prod);
+    const sold = prod.status === 'Sold';
+    const stats = getUserRatingStats(prod.owner);
+
+    const img = document.getElementById('ld-img');
+    img.src = prod.img;
+    img.alt = prod.title;
+    const badge = document.getElementById('ld-category-badge');
+    badge.dataset.category = prod.category || '';
+    badge.innerHTML = `<i data-lucide="${CATEGORY_ICONS[prod.category] || 'tag'}"></i>`;
+    document.getElementById('ld-category').textContent = prod.category || '';
+    const status = document.getElementById('ld-status');
+    status.className = `pill ${approved ? (sold ? 'rejected' : 'approved') : prod.approval}`;
+    status.textContent = approved ? (sold ? 'Traded' : 'Available') : prod.approval === 'rejected' ? 'Rejected' : 'Pending review';
+    document.getElementById('ld-title').textContent = prod.title;
+    document.getElementById('ld-desc').textContent = prod.desc || 'No description provided.';
+    document.getElementById('ld-seller').textContent = prod.owner + (isOwn ? ' (You)' : '');
+    document.getElementById('ld-seller-rating').innerHTML = stats.count
+        ? `<i data-lucide="star" class="inline-star ld-star"></i> ${stats.average.toFixed(1)} (${stats.count})`
+        : `<i data-lucide="star" class="inline-star ld-star"></i> New`;
+    document.getElementById('ld-posted').textContent = prod.createdAt ? new Date(prod.createdAt).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' }) : 'Unknown';
+    document.getElementById('ld-availability').textContent = sold ? 'Traded' : approved ? 'Available' : 'Not published yet';
+
+    const actions = document.getElementById('ld-actions');
+    if (isAdminUser()) actions.innerHTML = '';
+    else if (isOwn) actions.innerHTML = `<button type="button" class="glass-btn" onclick="closeModal('listing-modal'); openEditListing('${prod.id}')"><i data-lucide="pencil"></i> Edit listing</button>`;
+    else if (approved && !sold) actions.innerHTML = `
+        <button type="button" class="glass-btn primary-btn" data-category="${escapeHTML(prod.category || '')}" onclick="closeModal('listing-modal'); buyItemAndStartChat('${prod.id}')"><i data-lucide="message-square"></i> Chat with owner</button>
+        <button type="button" class="glass-btn ld-wish ${wishlist.includes(prod.id) ? 'saved' : ''}" data-category="${escapeHTML(prod.category || '')}" onclick="toggleWishlist('${prod.id}'); openListingDetail('${prod.id}')"><i data-lucide="heart"></i> ${wishlist.includes(prod.id) ? 'Remove from wishlist' : 'Save to wishlist'}</button>`;
+    else actions.innerHTML = '';
+
+    openModal('listing-modal');
+    lucide.createIcons();
+}
+
+function openSellerFromListing() {
+    const prod = products.find(p => p.id === detailProductId);
+    if (!prod) return;
+    closeModal('listing-modal');
+    openSellerProfile(prod.owner);
 }
 
 // ==========================================================
@@ -1623,13 +1702,17 @@ function renderWishlist() {
                 <div class="card-title">${escapeHTML(prod.title)}</div>
                 <div class="card-desc">${escapeHTML(prod.desc || '')}</div>
                 ${postedHTML(prod)}
-                <div class="card-owner" onclick="openSellerProfile('${prod.owner}')">Seller: ${prod.owner}</div>
+                <div class="card-owner" onclick="openSellerProfile('${prod.owner}')">Listed by: ${prod.owner}</div>
                 <div class="card-footer">
-                    <button class="glass-btn primary-btn" onclick="buyItemAndStartChat('${prod.id}')">
-                        <i data-lucide="message-square"></i> Chat
-                    </button>
+                    <div class="card-actions">
+                        ${categoryBadgeHTML(prod)}
+                        <button class="glass-btn primary-btn" onclick="buyItemAndStartChat('${prod.id}')">
+                            <i data-lucide="message-square"></i> Chat
+                        </button>
+                    </div>
                 </div>
             `;
+            makeCardOpenDetails(card, prod.id);
             grid.appendChild(card);
         });
     }
@@ -2125,7 +2208,7 @@ async function buyItemAndStartChat(productId) {
     if (!chatThread) {
         const openingMessage = {
             sender: currentUser.name,
-            text: `Hi! I'm interested in buying your "${prod.title}". Is it still available?`,
+            text: `Hi! I'm interested in your "${prod.title}". Is it still available?`,
             productId: prod.id,
             productTitle: prod.title,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -2151,7 +2234,7 @@ async function buyItemAndStartChat(productId) {
         // Re-opening a conversation the user deleted: greet again and un-hide it
         chatThread.messages.push({
             sender: currentUser.name,
-            text: `Hi! I'm interested in buying your "${prod.title}". Is it still available?`,
+            text: `Hi! I'm interested in your "${prod.title}". Is it still available?`,
             productId: prod.id,
             productTitle: prod.title,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -2307,9 +2390,22 @@ function paintUnreadBadges(total) {
             el.classList.add('pop');
         }
     });
-    document.title = total > 0 ? `(${total > 99 ? '99+' : total}) ${BRAND_TITLE}` : BRAND_TITLE;
+    tabChatUnread = total;
+    updateTabTitle();
 }
 const BRAND_TITLE = 'DLSAU Trading Hub';
+let tabChatUnread = 0;
+
+// Browser tab title: "(3) DLSAU Trading Hub" = unread messages + notifications (admin: pending listings + open reports)
+function updateTabTitle() {
+    let total = currentUser ? tabChatUnread : 0;
+    if (currentUser) {
+        total += isAdminUser()
+            ? products.filter(p => p.approval === 'pending').length + adminReports.filter(r => r.status === 'open').length
+            : (notifications || []).filter(n => !n.read).length;
+    }
+    document.title = total > 0 ? `(${total > 99 ? '99+' : total}) ${BRAND_TITLE}` : BRAND_TITLE;
+}
 
 // Counts unread messages, updates every badge and announces new ones with a toast
 function refreshUnread(chats) {
@@ -2408,7 +2504,7 @@ function selectChatThread(chatId) {
 
     document.getElementById('chat-recipient-avatar').innerText = partnerInitials;
     document.getElementById('chat-recipient-name').innerText = partnerName;
-    document.getElementById('chat-item-context').innerText = `Item: ${chat.itemTitle} (${isBuyer ? 'Seller' : 'Buyer'}: ${partnerName})`;
+    document.getElementById('chat-item-context').innerText = `Item: ${chat.itemTitle} (${isBuyer ? 'Owner' : 'Interested'}: ${partnerName})`;
 
     toggleChatRate(false);
     refreshChatRatePanel();
@@ -2451,6 +2547,13 @@ function renderChatMessages() {
     const keepScroll = editingMsgIndex !== null ? area.scrollTop : null;
     area.innerHTML = '';
     visibleMessages(chat).forEach(({ msg, index }) => {
+        if (msg.system) {
+            const note = document.createElement('div');
+            note.className = `chat-system ${msg.dealDone ? 'deal-complete' : ''}`;
+            note.innerHTML = `<i data-lucide="${msg.dealDone ? 'badge-check' : 'handshake'}"></i><span>${escapeHTML(msg.text)}</span>`;
+            area.appendChild(note);
+            return;
+        }
         const isMine = msg.sender === currentUser.name;
         const bubble = document.createElement('div');
         bubble.className = `chat-bubble ${isMine ? 'mine' : 'theirs'}`;
@@ -2508,6 +2611,141 @@ function renderChatMessages() {
 
     area.scrollTop = keepScroll !== null ? keepScroll : area.scrollHeight;
     lucide.createIcons();
+    refreshDealUI(chat);
+}
+
+// ----- Done deal: both people confirm, then the listing is removed and rating opens
+const nowTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+function getDealState(chat) {
+    const me = currentUser.name;
+    const partner = chat.buyerName === me ? chat.sellerName : chat.buyerName;
+    const confirmed = new Set(chat.messages.filter(m => m.dealConfirm).map(m => m.sender));
+    return { partner, mine: confirmed.has(me), theirs: confirmed.has(partner), done: chat.messages.some(m => m.dealDone) };
+}
+
+function refreshDealUI(chat) {
+    const btn = document.getElementById('chat-deal-btn');
+    if (!btn || !chat || !currentUser) return;
+    const { partner, mine, theirs, done } = getDealState(chat);
+
+    btn.classList.toggle('waiting', !done && mine);
+    btn.classList.toggle('done', done);
+    btn.disabled = done || mine;
+    document.getElementById('chat-deal-label').textContent = done ? 'Deal complete' : mine ? `Waiting for ${partner}` : theirs ? `${partner} confirmed - confirm deal` : 'Confirm deal';
+    btn.title = done ? 'This deal is complete' : mine ? `Waiting for ${partner} to confirm` : 'Both of you must confirm to complete the deal';
+    document.getElementById('chat-rate-btn').classList.toggle('hidden', !done);
+    document.getElementById('chat-deal-cancel-btn').classList.toggle('hidden', done || !mine);
+
+    if (!done) return;
+    const key = `dlsau_deal_rate_${chat.id}_${currentUser.name}`;
+    if (localStorage.getItem(key) || !isChatTabVisible() || chat.id !== activeChatId) return;
+    localStorage.setItem(key, '1');
+    if (!allRatings.some(r => r.targetUser === partner && r.ratedBy === currentUser.name)) {
+        showToast(`Deal complete! Please rate ${partner}.`, 'success');
+        toggleChatRate(true);
+    }
+}
+
+async function confirmDeal() {
+    const chat = globalChats.find(c => c.id === activeChatId);
+    if (!chat) return;
+    const { partner, mine, done } = getDealState(chat);
+    if (mine || done) return;
+
+    const ok = await confirmDialog({
+        title: 'Confirm the deal?',
+        message: `Once both you and ${partner} confirm, "${chat.itemTitle}" will be removed from the listings and you can rate each other.`,
+        confirmText: 'Yes, deal done',
+        cancelText: MESSAGES.confirm.cancel,
+        tone: 'warning',
+        icon: 'warning'
+    });
+    if (!ok) return;
+
+    // Work on the latest copy so two people confirming at once do not overwrite each other
+    const { data, error } = await db.from('chats').select('*').eq('id', chat.id).single();
+    if (error) { chatAlert(MESSAGES.saveFailed(error.message), 'error'); return; }
+    const latest = rowToChat(data);
+    const state = getDealState({ ...latest, messages: latest.messages });
+    if (!state.mine) {
+        latest.messages.push({ sender: currentUser.name, system: true, dealConfirm: true, text: `${currentUser.name} confirmed the deal.`, timestamp: nowTime() });
+    }
+    const bothConfirmed = state.theirs && !state.done;
+    if (bothConfirmed) {
+        latest.messages.push({ sender: currentUser.name, system: true, dealDone: true, text: 'Deal complete! The listing has been removed. Please rate each other.', timestamp: nowTime() });
+    }
+
+    const failure = await saveChatToDb(latest);
+    if (failure) { chatAlert(MESSAGES.saveFailed(failure), 'error'); return; }
+    chat.messages = latest.messages;
+
+    if (bothConfirmed) {
+        const msgWithProduct = chat.messages.find(m => m.productId);
+        const prod = products.find(p => (msgWithProduct && p.id === msgWithProduct.productId) || (p.title === chat.itemTitle && p.owner === chat.sellerName));
+        if (prod) {
+            const { error: delError } = await db.from('products').delete().eq('id', prod.id);
+            if (delError) showToast(MESSAGES.saveFailed(delError.message), 'error');
+            else {
+                products = products.filter(p => p.id !== prod.id);
+                wishlist = wishlist.filter(w => w !== prod.id);
+                saveWishlist();
+                renderProducts();
+                renderWishlist();
+            }
+        }
+    } else {
+        showToast(`Waiting for ${partner} to confirm the deal.`, 'info');
+    }
+    renderChatMessages();
+    renderChatThreads();
+}
+
+// Take back your own confirmation (only possible until the other person confirms too)
+async function cancelDeal() {
+    const chat = globalChats.find(c => c.id === activeChatId);
+    if (!chat) return;
+    const { partner, mine, done } = getDealState(chat);
+    if (!mine || done) return;
+
+    const ok = await confirmDialog({
+        title: 'Cancel the deal?',
+        message: `Your confirmation will be taken back. You and ${partner} can confirm again later.`,
+        confirmText: 'Cancel deal',
+        cancelText: 'Keep it',
+        tone: 'warning',
+        icon: 'warning'
+    });
+    if (!ok) return;
+
+    const { data, error } = await db.from('chats').select('*').eq('id', chat.id).single();
+    if (error) { chatAlert(MESSAGES.saveFailed(error.message), 'error'); return; }
+    const latest = rowToChat(data);
+    if (latest.messages.some(m => m.dealDone)) {
+        chat.messages = latest.messages;
+        chatAlert('The deal was already completed, so it can no longer be cancelled.', 'error');
+        renderChatMessages();
+        return;
+    }
+
+    for (let i = latest.messages.length - 1; i >= 0; i--) {
+        const m = latest.messages[i];
+        if (!(m.dealConfirm && m.sender === currentUser.name)) continue;
+        latest.messages.splice(i, 1);
+        Object.keys(latest.deletedBy).forEach(n => { if (i < latest.deletedBy[n]) latest.deletedBy[n]--; });
+        Object.keys(latest.seen).forEach(n => { if (i < latest.seen[n]) latest.seen[n]--; });
+    }
+    latest.messages.push({ sender: currentUser.name, system: true, text: `${currentUser.name} cancelled their deal confirmation.`, timestamp: nowTime() });
+
+    const failure = await saveChatToDb(latest);
+    db.from('chats').update({ seen: latest.seen }).eq('id', chat.id).then(() => {});
+    if (failure) { chatAlert(MESSAGES.saveFailed(failure), 'error'); return; }
+    chat.messages = latest.messages;
+    chat.deletedBy = latest.deletedBy;
+    chat.seen = latest.seen;
+    showToast('Your deal confirmation was cancelled.', 'info');
+    renderChatMessages();
+    renderChatThreads();
 }
 
 // Small card with the item's photo, shown inside a chat message that was sent from the Buy button
@@ -2520,8 +2758,8 @@ function listingPreviewHTML(msg) {
         <img src="${prod.img}" alt="${escapeHTML(prod.title)}">
         <div class="chat-listing-info">
             <strong>${escapeHTML(prod.title)}</strong>
-            <span>${escapeHTML(prod.category)} &middot; ${escapeHTML(prod.status || 'Available')}</span>
-            <span>Seller: ${escapeHTML(prod.owner)}</span>
+            <span>${escapeHTML(prod.category)} &middot; ${escapeHTML(prod.status === 'Sold' ? 'Traded' : (prod.status || 'Available'))}</span>
+            <span>Listed by: ${escapeHTML(prod.owner)}</span>
             ${prod.createdAt ? `<span>${postedLabel(prod.createdAt)}</span>` : ''}
         </div>
     </div>`;
@@ -2740,7 +2978,13 @@ function renderTeam() {
         const li = document.createElement('li');
         li.className = 'team-item';
         li.style.setProperty('--i', i);
-        li.textContent = name;
+        const [last, first = ''] = name.split(',').map(s => s.trim());
+        const avatar = document.createElement('span');
+        avatar.className = 'team-avatar';
+        avatar.textContent = ((first[0] || '') + (last[0] || '')).toUpperCase();
+        const label = document.createElement('span');
+        label.textContent = name;
+        li.append(avatar, label);
         list.appendChild(li);
     });
 }
@@ -2754,6 +2998,7 @@ async function notify(recipient, type, title, body) {
 }
 
 function renderNotifications() {
+    updateTabTitle();
     const badge = document.getElementById('notif-badge');
     if (!badge) return;
     const unread = (notifications || []).filter(n => !n.read).length;
@@ -2806,6 +3051,7 @@ async function openNotifications() {
     const { error } = await db.from('notifications').update({ read: true }).eq('recipient', currentUser.name).eq('read', false);
     if (error) return;
     unread.forEach(n => { n.read = true; });
+    updateTabTitle();
     const badge = document.getElementById('notif-badge');
     badge.classList.add('hidden');
 }
@@ -2868,6 +3114,7 @@ function renderAdmin() {
     if (!isAdminUser()) return;
     const pending = products.filter(p => p.approval === 'pending');
     const openReports = adminReports.filter(r => r.status === 'open');
+    updateTabTitle();
     [['admin-pending-badge', pending.length], ['admin-tab-pending', pending.length], ['admin-tab-reports', openReports.length]].forEach(([id, n]) => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -2908,7 +3155,14 @@ function approvalPill(approval) {
 function renderAdminBody() {
     const body = document.getElementById('admin-body');
     if (!body) return;
-    const empty = text => `<p class="admin-empty">${text}</p>`;
+    const ART = {
+        pending: '<rect x="30" y="14" width="60" height="78" rx="8" fill="#fff" stroke="#0F2418" stroke-width="3"/><rect x="46" y="8" width="28" height="14" rx="5" fill="#C6F432" stroke="#0F2418" stroke-width="3"/><path d="M42 44l6 6 11-12M42 66l6 6 11-12" fill="none" stroke="#0A7A4B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M66 46h14M66 68h14" stroke="#0F2418" stroke-width="3" stroke-linecap="round" opacity=".35"/><circle cx="96" cy="26" r="9" fill="#FFB300"/>',
+        listings: '<path d="M60 18l38 18v44L60 98 22 80V36z" fill="#7DDBA8" stroke="#0F2418" stroke-width="3" stroke-linejoin="round"/><path d="M22 36l38 18 38-18M60 54v44" fill="none" stroke="#0F2418" stroke-width="3" stroke-linejoin="round"/><path d="M41 27l38 18" stroke="#0F2418" stroke-width="3"/><circle cx="98" cy="22" r="9" fill="#FFB300"/><circle cx="18" cy="92" r="6" fill="#C6F432"/>',
+        accounts: '<circle cx="44" cy="40" r="14" fill="#FFD9B3" stroke="#0F2418" stroke-width="3"/><path d="M18 90v-14a26 26 0 0 1 52 0v14z" fill="#7DDBA8" stroke="#0F2418" stroke-width="3"/><circle cx="82" cy="46" r="11" fill="#F2C18F" stroke="#0F2418" stroke-width="3"/><path d="M64 92v-10a18 18 0 0 1 36 0v10z" fill="#FFB300" stroke="#0F2418" stroke-width="3"/><circle cx="100" cy="18" r="7" fill="#C6F432"/>',
+        reports: '<path d="M60 12l36 14v26c0 22-15 38-36 46-21-8-36-24-36-46V26z" fill="#fff" stroke="#0F2418" stroke-width="3" stroke-linejoin="round"/><path d="M44 54l12 12 22-24" fill="none" stroke="#0A7A4B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="102" cy="22" r="8" fill="#FFB300"/><circle cx="16" cy="84" r="6" fill="#C6F432"/>'
+    };
+    const TITLES = { pending: 'All caught up', listings: 'No listings yet', accounts: 'No accounts yet', reports: 'No reports' };
+    const empty = text => `<div class="admin-empty"><svg viewBox="0 0 120 104" width="120" height="104" aria-hidden="true">${ART[adminTab] || ART.pending}</svg><strong>${TITLES[adminTab] || 'Nothing here'}</strong><p>${text}</p></div>`;
 
     if (adminTab === 'pending') {
         const list = products.filter(p => p.approval === 'pending' && (!adminSearch || p.title.toLowerCase().includes(adminSearch) || p.owner.toLowerCase().includes(adminSearch) || p.category.toLowerCase().includes(adminSearch))).reverse();
@@ -2930,7 +3184,7 @@ function renderAdminBody() {
             (adminFilter === 'all' || p.approval === adminFilter) &&
             (!adminSearch || p.title.toLowerCase().includes(adminSearch) || p.owner.toLowerCase().includes(adminSearch) || p.category.toLowerCase().includes(adminSearch)));
         body.innerHTML = list.length ? `<div class="admin-table-wrap"><table class="admin-table">
-            <thead><tr><th></th><th>Item</th><th>Seller</th><th>Category</th><th>Review</th><th>Sale</th><th>Actions</th></tr></thead>
+            <thead><tr><th></th><th>Item</th><th>Owner</th><th>Category</th><th>Review</th><th>Trade</th><th>Actions</th></tr></thead>
             <tbody>${list.map(p => `
                 <tr data-id="${p.id}">
                     <td><img class="admin-thumb" src="${p.img}" alt=""></td>
@@ -2938,7 +3192,7 @@ function renderAdminBody() {
                     <td>${escapeHTML(p.owner)}</td>
                     <td>${escapeHTML(p.category)}</td>
                     <td>${approvalPill(p.approval)}</td>
-                    <td>${escapeHTML(p.status || 'Available')}</td>
+                    <td>${p.status === 'Sold' ? 'Traded' : escapeHTML(p.status || 'Available')}</td>
                     <td><div class="admin-actions">
                         ${p.approval !== 'approved' ? `<button class="glass-btn" onclick="approveProduct('${p.id}')" title="Approve"><i data-lucide="check"></i></button>` : ''}
                         ${p.approval !== 'rejected' ? `<button class="glass-btn" onclick="openRejectModal('${p.id}')" title="Reject"><i data-lucide="x"></i></button>` : ''}
@@ -2948,19 +3202,23 @@ function renderAdminBody() {
     } else if (adminTab === 'accounts') {
         const list = adminAccounts.filter(a => !adminSearch || a.name.toLowerCase().includes(adminSearch) || a.email.toLowerCase().includes(adminSearch));
         body.innerHTML = list.length ? `<div class="admin-table-wrap"><table class="admin-table">
-            <thead><tr><th>Username</th><th>Email</th><th>Listings</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody>${list.map(a => `
+            <thead><tr><th>Username</th><th>Email</th><th>Listings</th><th>Rating</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>${list.map(a => {
+                const rs = getUserRatingStats(a.name);
+                return `
                 <tr data-id="${a.id}">
                     <td><strong>${escapeHTML(a.name)}</strong></td>
                     <td>${escapeHTML(a.email)}</td>
                     <td>${products.filter(p => p.owner === a.name).length}</td>
+                    <td><button type="button" class="admin-rating-link" onclick="openAdminRatings('${a.id}')" title="View ratings">${rs.count ? `<span class="admin-rating-stars">${starRowHTML(rs.average, 12)}</span> <strong>${rs.average.toFixed(1)}</strong> <span class="text-muted">(${rs.count})</span>` : '<span class="text-muted">No ratings</span>'}</button></td>
                     <td>${fmtDate(a.createdAt)}</td>
                     <td>${a.deleted ? `<span class="pill rejected" title="${escapeHTML(a.statusReason)}">Deleted</span>` : a.suspended ? `<span class="pill rejected" title="${escapeHTML(a.statusReason)}">Suspended</span>` : '<span class="pill approved">Active</span>'}</td>
                     <td><div class="admin-actions">
                         ${a.deleted ? `<button class="glass-btn" onclick="restoreAccount('${a.id}')" title="Restore"><i data-lucide="user-check"></i></button>` : `<button class="glass-btn" onclick="toggleSuspendAccount('${a.id}')" title="${a.suspended ? 'Unsuspend' : 'Suspend'}"><i data-lucide="${a.suspended ? 'user-check' : 'user-x'}"></i></button>
                         <button class="glass-btn danger-btn" onclick="deleteAccount('${a.id}')" title="Delete"><i data-lucide="trash"></i></button>`}
                     </div></td>
-                </tr>`).join('')}</tbody></table></div>` : empty('No accounts found.');
+                </tr>`;
+            }).join('')}</tbody></table></div>` : empty('No accounts found.');
     } else {
         const reports = adminReports.filter(r => !adminSearch || [r.reporter, r.reportedUser, r.reason, r.itemTitle, r.details, r.status].some(v => (v || '').toLowerCase().includes(adminSearch)));
         body.innerHTML = reports.length ? `<div class="admin-review-list">${reports.map(r => {
@@ -2979,6 +3237,7 @@ function renderAdminBody() {
                         ? `<button class="glass-btn primary-btn" onclick="setReportStatus('${r.id}', 'resolved')">Mark resolved</button>
                            <button class="glass-btn" onclick="setReportStatus('${r.id}', 'dismissed')">Dismiss</button>`
                         : `<button class="glass-btn" onclick="setReportStatus('${r.id}', 'open')">Reopen</button>`}
+                    <button class="glass-btn danger-btn" onclick="deleteReport('${r.id}')" title="Delete report"><i data-lucide="trash"></i> Delete</button>
                     ${target ? (target.deleted ? `<button class="glass-btn" onclick="restoreAccount('${target.id}')">Restore account</button>` : `<button class="glass-btn danger-btn" onclick="toggleSuspendAccount('${target.id}')">${target.suspended ? 'Unsuspend user' : 'Suspend user'}</button>`) : ''}
                 </div>
             </article>`;
@@ -3003,7 +3262,7 @@ async function approveProduct(id) {
     if (error) { showToast(MESSAGES.saveFailed(error.message), 'error'); return; }
     prod.approval = 'approved';
     prod.rejectReason = '';
-    notify(prod.owner, 'approved', `Your listing "${prod.title}" was approved.`, 'It is now visible on the marketplace.');
+    notify(prod.owner, 'approved', `Your listing "${prod.title}" was approved.`, 'It is now visible on the trading hub.');
     showToast(MESSAGES.listingApproved(prod.title), 'success');
     await adminResolveListing(id, 'admin-approved');
     renderProducts();
@@ -3201,6 +3460,42 @@ async function setReportStatus(id, status) {
     flashEl(adminRow(id), status === 'dismissed' ? 'flash-bad' : 'flash-good');
 }
 
+// Admin: full list of ratings an account has received (who rated, stars, comment)
+function openAdminRatings(accountId) {
+    const acc = adminAccounts.find(a => a.id === accountId);
+    if (!acc) return;
+    const stats = getUserRatingStats(acc.name);
+    document.getElementById('admin-ratings-title').textContent = `Ratings for ${acc.name}`;
+    renderRatingSummary(document.getElementById('admin-ratings-summary'), stats);
+    const list = document.getElementById('admin-ratings-list');
+    list.innerHTML = stats.list.length ? stats.list.map(r => `
+        <li class="review-item">
+            <div class="review-top"><strong class="review-name">${escapeHTML(r.ratedBy)}</strong><span class="review-stars" aria-hidden="true">${starRowHTML(r.rating, 12)}</span><time class="review-date">${r.updatedAt ? fmtDate(r.updatedAt) : ''}</time></div>
+            ${r.comment ? `<p class="review-text">${escapeHTML(r.comment)}</p>` : ''}
+        </li>`).join('') : `<li class="review-empty">${MESSAGES.noRatings}</li>`;
+    openModal('admin-ratings-modal');
+}
+
+async function deleteReport(id) {
+    const report = adminReports.find(r => r.id === id);
+    if (!report) return;
+    const ok = await confirmDialog({
+        title: 'Delete this report?',
+        message: `The report from ${report.reporter}${report.reason === 'Account appeal' ? '' : ` about ${report.reportedUser}`} will be permanently removed.`,
+        confirmText: 'Delete report',
+        cancelText: MESSAGES.confirm.cancel,
+        tone: 'danger',
+        icon: 'trash'
+    });
+    if (!ok) return;
+    const { error } = await db.from('reports').delete().eq('id', id);
+    if (error) { showToast(MESSAGES.saveFailed(error.message), 'error'); return; }
+    await animateOut([adminRow(id)], 'admin-removed');
+    adminReports = adminReports.filter(r => r.id !== id);
+    showToast('Report deleted.', 'info');
+    renderAdmin();
+}
+
 // ==========================================================
 // 16. MOBILE - conversation panel and on-screen keyboard handling
 // ==========================================================
@@ -3242,12 +3537,12 @@ const LEGAL_DOCS = {
         heading: 'Terms of Service and Conditions',
         html: `
             <p class="legal-updated">${LEGAL_UPDATED}</p>
-            <p>Welcome to DLSAU Trading Hub, a community marketplace for everyone inside De La Salle Araneta University, including students, faculty, professors, staff, guests and other members of the campus community. By creating an account or using the site you agree to these terms.</p>
+            <p>Welcome to DLSAU Trading Hub, a community trading hub for everyone inside De La Salle Araneta University, including students, faculty, professors, staff, guests and other members of the campus community. By creating an account or using the site you agree to these terms.</p>
             <h4>1. Who can use the Hub</h4>
             <p>The Hub is for members of the DLSAU community, including students, faculty, professors, staff and guests. You must give a real email address you control and keep your password private. You are responsible for everything done through your account.</p>
             <h4>2. Listings</h4>
             <ul>
-                <li>Post only items you own and are allowed to sell or trade, with honest photos and descriptions.</li>
+                <li>Post only items you own and are allowed to list or trade, with honest photos and descriptions.</li>
                 <li>Every listing is reviewed by an admin before it is shown. Listings may be rejected, edited or removed if they break these terms.</li>
                 <li>Prohibited items include weapons, drugs, alcohol, vapes, stolen goods, counterfeit goods, exam papers and anything illegal or against school policy.</li>
             </ul>
@@ -3299,23 +3594,60 @@ const LEGAL_DOCS = {
 };
 
 let legalConsentMode = false;
+let legalTab = 'terms';
+let legalRead = { terms: false, privacy: false };
+
+// In the create-account agreement the box stays locked until both documents were scrolled to the end
+function updateLegalProgress() {
+    const done = legalRead.terms && legalRead.privacy;
+    document.querySelectorAll('.legal-tab').forEach(b => b.classList.toggle('read', legalRead[b.dataset.legal]));
+    const agree = document.getElementById('legal-agree');
+    agree.disabled = legalConsentMode && !done;
+    document.querySelector('.check-row').classList.toggle('locked', agree.disabled);
+    if (agree.disabled && agree.checked) { agree.checked = false; document.getElementById('legal-accept-btn').disabled = true; }
+    const hint = document.getElementById('legal-read-hint');
+    hint.classList.toggle('done', done);
+    hint.textContent = done
+        ? 'Thanks for reading. You can now tick the box to agree.'
+        : `Scroll to the bottom of the ${!legalRead.terms && !legalRead.privacy ? 'Terms of Service and the Privacy Policy' : !legalRead.terms ? 'Terms of Service' : 'Privacy Policy'} to unlock the checkbox.`;
+}
+
+function checkLegalScrolled() {
+    if (!legalConsentMode) return;
+    const body = document.getElementById('legal-body');
+    if (body.scrollTop + body.clientHeight >= body.scrollHeight - 6) {
+        if (!legalRead[legalTab]) { legalRead[legalTab] = true; updateLegalProgress(); }
+    }
+}
+document.getElementById('legal-body').addEventListener('scroll', checkLegalScrolled, { passive: true });
 
 function showLegalTab(tab) {
     const doc = LEGAL_DOCS[tab] || LEGAL_DOCS.terms;
+    legalTab = LEGAL_DOCS[tab] ? tab : 'terms';
     document.querySelectorAll('.legal-tab').forEach(b => b.classList.toggle('active', b.dataset.legal === tab));
     document.getElementById('legal-heading').textContent = doc.heading;
     const body = document.getElementById('legal-body');
     body.innerHTML = doc.html;
     body.scrollTop = 0;
+    if (legalConsentMode) requestAnimationFrame(checkLegalScrolled);
 }
 
 function openLegal(tab = 'terms', consent = false) {
     legalConsentMode = consent;
+    legalRead = { terms: false, privacy: false };
     document.getElementById('legal-consent').classList.toggle('hidden', !consent);
     document.getElementById('legal-agree').checked = false;
     document.getElementById('legal-accept-btn').disabled = true;
+    document.querySelectorAll('.legal-tab').forEach(b => b.classList.remove('read'));
     if (consent) document.getElementById('legal-heading').textContent = 'Before you join';
     showLegalTab(tab);
+    if (consent) {
+        updateLegalProgress();
+        openModal('legal-modal');
+        requestAnimationFrame(checkLegalScrolled);
+        document.getElementById('legal-heading').textContent = 'Before you join';
+        return;
+    }
     if (consent) document.getElementById('legal-heading').textContent = 'Before you join';
     openModal('legal-modal');
 }

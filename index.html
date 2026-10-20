@@ -12,6 +12,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
     <title>DLSAU Trading Hub</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -32,8 +33,8 @@
             <aside class="auth-art" aria-label="Welcome">
               <div class="art-view art-login">
                 <h2>Trade, swap &amp; <em>share</em> with your campus family.</h2>
-                <p class="auth-art-sub">Join fellow DLSAU students buying, selling and trading the things they no longer need. It takes less than a minute to get started.</p>
-                <svg class="auth-illustration" viewBox="0 0 420 300" role="img" aria-label="Two students happily trading items at a campus stall">
+                <p class="auth-art-sub">Join fellow Lasallians listing and trading the things they no longer need. It takes less than a minute to get started.</p>
+                <svg class="auth-illustration" viewBox="0 0 420 300" role="img" aria-label="Two Lasallians happily trading items at a campus stall">
                     <ellipse cx="210" cy="272" rx="170" ry="16" fill="#0A7A4B" opacity="0.12"/>
                     <circle cx="332" cy="70" r="42" fill="#FFB300"/>
                     <circle cx="70" cy="64" r="18" fill="#C6F432"/>
@@ -66,14 +67,14 @@
                 </svg>
                 <ul class="auth-art-points">
                     <li><i data-lucide="shield-check" aria-hidden="true"></i> Every listing is reviewed by an admin</li>
-                    <li><i data-lucide="message-square" aria-hidden="true"></i> Chat directly with sellers on campus</li>
-                    <li><i data-lucide="star" aria-hidden="true"></i> Trade with rated, verified students</li>
+                    <li><i data-lucide="message-square" aria-hidden="true"></i> Chat directly with other Lasallians on campus</li>
+                    <li><i data-lucide="star" aria-hidden="true"></i> Trade with rated, verified Lasallians</li>
                 </ul>
               </div>
               <div class="art-view art-register">
-                <h2>Your campus marketplace <em>starts</em> here.</h2>
-                <p class="auth-art-sub">Set up your free profile, list your first item and connect with students who are looking for exactly what you have.</p>
-                <svg class="auth-illustration" viewBox="0 0 420 300" role="img" aria-label="A student building a profile and listing a first item on a phone">
+                <h2>Your campus trading hub <em>starts</em> here.</h2>
+                <p class="auth-art-sub">Set up your free profile, list your first item and connect with Lasallians who are looking for exactly what you have.</p>
+                <svg class="auth-illustration" viewBox="0 0 420 300" role="img" aria-label="A Lasallian building a profile and listing a first item on a phone">
                     <ellipse cx="210" cy="276" rx="150" ry="14" fill="#0A7A4B" opacity="0.12"/>
                     <circle cx="80" cy="80" r="46" fill="#7DDBA8"/>
                     <circle cx="350" cy="214" r="30" fill="#C6F432"/>
@@ -110,13 +111,8 @@
             </aside>
 
         <div class="glass-card auth-card" data-view="login">
-            <div class="logo center">
-                <i data-lucide="leaf"></i>
-                <span>DLSAU Trading Hub</span>
-            </div>
-            
             <div class="auth-welcome">
-                <h1 class="auth-welcome-login">Welcome back</h1>
+                <h1 class="auth-welcome-login">Welcome back!</h1>
                 <h1 class="auth-welcome-register">Hello there, newcomer!</h1>
                 <p class="auth-welcome-login">Good to see you again. Sign in to pick up where you left off.</p>
                 <p class="auth-welcome-register">Create your account and start trading with your campus family.</p>
@@ -147,8 +143,8 @@
             <form novalidate id="register-form" class="hidden" onsubmit="handleRegister(event)">
                 <div class="input-group">
                     <label for="reg-name">Username</label>
-                    <input type="text" id="reg-name" placeholder="e.g. justine_garma" minlength="3" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required>
-                    <p class="input-hint">3-20 characters: letters, numbers, dots or underscores.</p>
+                    <input type="text" id="reg-name" placeholder="e.g. james" minlength="3" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+                    <p class="input-hint">Keep it simple, a first name like "james" works great. You can use letters, numbers, dots or underscores.</p>
                 </div>
                 <div class="input-group">
                     <label for="reg-email">Email</label>
@@ -199,7 +195,7 @@
                     <span aria-hidden="true">&middot;</span>
                     <a href="#" class="text-link" onclick="openHelp(); return false;">Help</a>
                 </nav>
-                <p>&copy; <span id="auth-year">2026</span> DLSAU Trading Hub.</p>
+                <p>&copy; <span id="auth-year">2026</span> DLSAU Trading Hub</p>
             </footer>
         </div>
         </div>
@@ -222,7 +218,7 @@
 
                 <div class="search-box glass-input">
                     <i data-lucide="search"></i>
-                    <input type="text" id="search-input" placeholder="Search products, sellers..." />
+                    <input type="text" id="search-input" placeholder="Search listings, members, categories..." />
                 </div>
 
                 <div class="header-actions">
@@ -299,11 +295,10 @@
             <main class="app-content" id="tab-home-view">
                 <section class="hero" aria-label="Welcome">
                     <div class="hero-text">
-                        <p class="eyebrow">DLSAU Trading Hub</p>
                         <h2>Trade, swap &amp; <em>share</em> across campus.</h2>
-                        <p class="hero-sub">Post what you no longer need, find what you are looking for, and chat directly with fellow students to arrange a trade.</p>
+                        <p class="hero-sub">Post what you no longer need, find what you are looking for, and chat directly with fellow Lasallians to arrange a trade.</p>
                         <button class="glass-btn primary-btn" onclick="openModal('upload-modal')">
-                            <i data-lucide="repeat-2" aria-hidden="true"></i> Post an item to trade
+                            <i data-lucide="repeat-2" aria-hidden="true"></i> List an item to trade
                         </button>
                     </div>
                     <svg class="hero-art" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
@@ -323,7 +318,7 @@
                     <li class="category-item" data-category="Other"><i data-lucide="ellipsis"></i> Other</li>
                 </ul>
                 <div class="section-header">
-                    <h3 id="current-category-title">Market Listings</h3>
+                    <h3 id="current-category-title">All Listings</h3>
                     <span class="item-count" id="item-count">0 Products Available</span>
                 </div>
 
@@ -350,7 +345,7 @@
                         <div class="chat-empty-view" id="chat-empty-view">
                             <i data-lucide="message-square"></i>
                             <h4>Your Messages</h4>
-                            <p>Select a conversation or click "Chat" on any listed product to start chatting with the seller.</p>
+                            <p>Select a conversation or click "Chat" on any listed product to start chatting with the owner.</p>
                         </div>
 
                         <div class="chat-active-view hidden" id="chat-active-view">
@@ -359,12 +354,18 @@
                                 <div class="chat-user-details" style="cursor: pointer;" onclick="openSellerProfileFromChat()">
                                     <div class="avatar" id="chat-recipient-avatar">--</div>
                                     <div>
-                                        <h4 id="chat-recipient-name">Seller Name</h4>
+                                        <h4 id="chat-recipient-name">Member Name</h4>
                                         <p id="chat-item-context" class="text-muted">Item Context</p>
                                     </div>
                                 </div>
                                 <div class="chat-header-actions">
-                                    <button type="button" class="glass-btn rate-btn" id="chat-rate-btn" onclick="toggleChatRate()" aria-haspopup="dialog" aria-expanded="false" aria-controls="chat-rate-panel" title="Rate this user">
+                                    <button type="button" class="glass-btn primary-btn deal-btn" id="chat-deal-btn" onclick="confirmDeal()" title="Both of you must confirm to complete the deal">
+                                        <i data-lucide="handshake" aria-hidden="true"></i> <span id="chat-deal-label">Confirm deal</span>
+                                    </button>
+                                    <button type="button" class="glass-btn danger-btn deal-btn hidden" id="chat-deal-cancel-btn" onclick="cancelDeal()" title="Take back your confirmation">
+                                        <i data-lucide="undo-2" aria-hidden="true"></i> <span>Cancel deal</span>
+                                    </button>
+                                    <button type="button" class="glass-btn rate-btn hidden" id="chat-rate-btn" onclick="toggleChatRate()" aria-haspopup="dialog" aria-expanded="false" aria-controls="chat-rate-panel" title="Rate this user">
                                         <i data-lucide="star" aria-hidden="true"></i> <span id="chat-rate-label">Rate</span>
                                     </button>
                                     <button type="button" class="icon-btn danger-hover" id="chat-report-btn" onclick="openReportModal()" aria-label="Report this user" title="Report this user">
@@ -476,7 +477,7 @@
     <div class="modal-overlay hidden" id="upload-modal">
         <div class="glass-card modal-card wizard-card">
             <div class="modal-header">
-                <h3>Post an Item to Trade</h3>
+                <h3>List an Item to Trade</h3>
                 <button class="close-btn" aria-label="Close dialog" onclick="closeModal('upload-modal')">&times;</button>
             </div>
 
@@ -512,7 +513,7 @@
                 <!-- STEP 2: PHOTO -->
                 <section class="wizard-step hidden" data-step="1" aria-labelledby="step-title-1">
                     <h4 id="step-title-1">Add a photo</h4>
-                    <p class="step-hint">A clear photo helps other students find your item.</p>
+                    <p class="step-hint">A clear photo helps other Lasallians find your item.</p>
                     <div class="input-group">
                         <label for="prod-file">Photo <span class="required-mark" aria-hidden="true">*</span></label>
                         <input type="file" id="prod-file" accept="image/*" required>
@@ -531,7 +532,7 @@
                 <!-- STEP 3: DETAILS -->
                 <section class="wizard-step hidden" data-step="2" aria-labelledby="step-title-2">
                     <h4 id="step-title-2">Describe it</h4>
-                    <p class="step-hint">Mention the condition, size or anything a buyer should know.</p>
+                    <p class="step-hint">Mention the condition, size or anything others should know.</p>
                     <div class="input-group">
                         <label for="prod-desc">Description <span class="required-mark" aria-hidden="true">*</span></label>
                         <textarea id="prod-desc" rows="2" maxlength="100" placeholder="Short description (max 100 characters)" required></textarea>
@@ -570,9 +571,8 @@
                 <p id="prof-email" class="text-muted">user</p>
                 
                 <div class="rating-box" id="my-rating-box">
-                    <h4>Your Campus Rating</h4>
+                    <h4>Your Trader Rating</h4>
                     <div class="rating-summary" id="my-rating-summary"></div>
-                    <p class="text-muted rating-note">You cannot rate yourself. Other students rate you.</p>
                     <ul class="review-list" id="my-reviews" aria-label="Reviews about you"></ul>
                 </div>
 
@@ -588,16 +588,16 @@
     <div class="modal-overlay hidden" id="seller-profile-modal">
         <div class="glass-card modal-card">
             <div class="modal-header">
-                <h3>Seller Profile</h3>
+                <h3>Member Profile</h3>
                 <button class="close-btn" aria-label="Close dialog" onclick="closeModal('seller-profile-modal')">&times;</button>
             </div>
             <div class="profile-detail center">
                 <div class="avatar large" id="seller-prof-avatar">--</div>
-                <h3 id="seller-prof-name">Seller Name</h3>
+                <h3 id="seller-prof-name">Member Name</h3>
                 <p id="seller-prof-role" class="text-muted">DLSAU Member</p>
                 
                 <div class="rating-box">
-                    <h4>Seller Rating</h4>
+                    <h4>Member Rating</h4>
                     <div class="rating-summary" id="seller-rating-summary"></div>
 
                     <form novalidate class="rate-form" id="rate-form" onsubmit="handleSubmitRating(event)">
@@ -632,17 +632,29 @@
                 <button class="close-btn" aria-label="Close dialog" onclick="closeModal('team-modal')">&times;</button>
             </div>
             <section class="about-section" aria-labelledby="about-title">
-                <h4 id="about-title">About DLSAU Marketplace</h4>
-                <p>DLSAU Marketplace is a student-to-student trading hub for De La Salle Araneta University. Students can post items they no longer need, browse what others are offering, and chat directly with sellers to arrange a trade on campus.</p>
+                <div class="about-hero">
+                    <span class="about-logo" aria-hidden="true"><i data-lucide="leaf"></i></span>
+                    <div>
+                        <h4 id="about-title">About DLSAU Trading Hub</h4>
+                        <span class="about-tag">Trade, swap &amp; share across campus</span>
+                    </div>
+                </div>
+                <p class="about-lead">DLSAU Trading Hub is a community platform for everyone at De La Salle Araneta University. Lasallians can list items they no longer need, browse what others are offering, and chat directly with other members to arrange a trade on campus.</p>
                 <ul class="about-points">
-                    <li><i data-lucide="shield-check" aria-hidden="true"></i> Every listing is reviewed by an admin before it appears on the marketplace.</li>
-                    <li><i data-lucide="message-square" aria-hidden="true"></i> Chat with sellers, share the item you are interested in, and see when your messages are read.</li>
-                    <li><i data-lucide="star" aria-hidden="true"></i> Rate the people you trade with and report anyone who breaks the rules.</li>
+                    <li><span class="about-icon"><i data-lucide="shield-check" aria-hidden="true"></i></span><div><strong>Reviewed listings</strong><span>Every listing is reviewed by an admin before it appears on the trading hub.</span></div></li>
+                    <li><span class="about-icon blue"><i data-lucide="message-square" aria-hidden="true"></i></span><div><strong>Direct chat</strong><span>Chat with other members, share the item you are interested in, and see when your messages are read.</span></div></li>
+                    <li><span class="about-icon amber"><i data-lucide="star" aria-hidden="true"></i></span><div><strong>Ratings &amp; reports</strong><span>Rate the people you trade with and report anyone who breaks the rules.</span></div></li>
                 </ul>
             </section>
-            <h4 class="about-subtitle">The developers</h4>
+            <h4 class="about-subtitle"><i data-lucide="users" aria-hidden="true"></i> Meet the team</h4>
             <ol class="team-list" id="team-list"></ol>
-            <p class="team-foot"><i data-lucide="leaf" aria-hidden="true"></i> DLSAU Trading Hub</p>
+            <nav class="about-legal" aria-label="Legal and help">
+                <a href="#" class="text-link" onclick="openLegal('terms'); return false;">Terms of Service</a>
+                <span aria-hidden="true">&middot;</span>
+                <a href="#" class="text-link" onclick="openLegal('privacy'); return false;">Privacy Policy</a>
+                <span aria-hidden="true">&middot;</span>
+                <a href="#" class="text-link" onclick="openHelp(); return false;">Help</a>
+            </nav>
         </div>
     </div>
 
@@ -709,6 +721,7 @@
             </div>
             <div class="legal-body" id="legal-body" tabindex="0"></div>
             <div class="legal-consent hidden" id="legal-consent">
+                <p class="legal-read-hint" id="legal-read-hint" role="status"></p>
                 <label class="check-row" for="legal-agree">
                     <input type="checkbox" id="legal-agree" onchange="document.getElementById('legal-accept-btn').disabled = !this.checked">
                     <span class="check-box" aria-hidden="true"></span>
@@ -734,8 +747,8 @@
                 <p>Sign up with your DLSAU details, then save the recovery code shown once after registering. You will need it to reset your password.</p>
                 <h4>Forgot your password?</h4>
                 <p>Use the "Forgot password" option on the login page and enter your recovery code.</p>
-                <h4>Buying and selling</h4>
-                <p>Browse the marketplace, message sellers in chat, and post your own items. New listings are reviewed by an admin before they appear.</p>
+                <h4>Listing and trading</h4>
+                <p>Browse the listings, message the member who listed an item, and list your own items. New listings are reviewed by an admin before they appear.</p>
                 <h4>Safety</h4>
                 <p>Meet on campus, and report suspicious users from the chat. Admins review all reports.</p>
                 <h4>Still stuck?</h4>
@@ -805,6 +818,41 @@
         </div>
     </div>
 
+    <!-- POPUP - Listing details (opens when a listing card is clicked) -->
+    <div class="modal-overlay hidden" id="listing-modal">
+        <div class="glass-card modal-card listing-detail" role="dialog" aria-labelledby="ld-title">
+            <button class="close-btn ld-close" aria-label="Close dialog" onclick="closeModal('listing-modal')">&times;</button>
+            <div class="ld-photo"><img id="ld-img" alt=""></div>
+            <div class="ld-body">
+                <div class="ld-tags">
+                    <span class="category-badge" id="ld-category-badge"><i id="ld-category-icon"></i></span>
+                    <span class="ld-category" id="ld-category"></span>
+                    <span class="pill" id="ld-status"></span>
+                </div>
+                <h3 id="ld-title"></h3>
+                <p class="ld-desc" id="ld-desc"></p>
+                <dl class="ld-facts">
+                    <div><dt><i data-lucide="user" aria-hidden="true"></i> Listed by</dt><dd><button type="button" class="text-link" id="ld-seller" onclick="openSellerFromListing()"></button> <span id="ld-seller-rating" class="text-muted"></span></dd></div>
+                    <div><dt><i data-lucide="calendar" aria-hidden="true"></i> Posted</dt><dd id="ld-posted"></dd></div>
+                    <div><dt><i data-lucide="tag" aria-hidden="true"></i> Availability</dt><dd id="ld-availability"></dd></div>
+                </dl>
+                <div class="ld-actions" id="ld-actions"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP - Ratings of an account (admin) -->
+    <div class="modal-overlay hidden" id="admin-ratings-modal">
+        <div class="glass-card modal-card">
+            <div class="modal-header">
+                <h3 id="admin-ratings-title">Ratings</h3>
+                <button class="close-btn" aria-label="Close dialog" onclick="closeModal('admin-ratings-modal')">&times;</button>
+            </div>
+            <div class="rating-summary" id="admin-ratings-summary"></div>
+            <ul class="review-list admin-ratings-list" id="admin-ratings-list" aria-label="All ratings for this account"></ul>
+        </div>
+    </div>
+
     <!-- POPUP - Suspend / delete account (admin) -->
     <div class="modal-overlay hidden" id="account-action-modal">
         <div class="glass-card modal-card">
@@ -855,7 +903,7 @@
             <form novalidate id="reject-form" onsubmit="handleRejectListing(event)">
                 <p class="step-hint" id="reject-target-text"></p>
                 <div class="input-group">
-                    <label for="reject-reason">Note to the seller <span class="required-mark" aria-hidden="true">*</span></label>
+                    <label for="reject-reason">Note to the owner <span class="required-mark" aria-hidden="true">*</span></label>
                     <textarea id="reject-reason" rows="3" maxlength="300" required placeholder="e.g. The photo does not show the item."></textarea>
                 </div>
                 <div class="wizard-actions">
