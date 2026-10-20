@@ -259,3 +259,9 @@ alter table public.accounts alter column pass_hash drop not null;
 --    recovery code that lets a user reset a forgotten password on the website.
 -- ============================================================
 alter table public.accounts add column if not exists recovery_hash text;
+
+-- ============================================================
+-- 8. UPDATE: suspended / deleted accounts keep their row and show a reason
+-- ============================================================
+alter table public.accounts add column if not exists deleted boolean not null default false;
+alter table public.accounts add column if not exists status_reason text;

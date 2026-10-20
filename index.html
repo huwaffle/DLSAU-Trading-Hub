@@ -150,8 +150,10 @@
                     <a href="#" class="text-link" onclick="openLegal('terms'); return false;">Terms of Service</a>
                     <span aria-hidden="true">&middot;</span>
                     <a href="#" class="text-link" onclick="openLegal('privacy'); return false;">Privacy Policy</a>
+                    <span aria-hidden="true">&middot;</span>
+                    <a href="#" class="text-link" onclick="openHelp(); return false;">Help</a>
                 </nav>
-                <p>&copy; <span id="auth-year">2026</span> DLSAU Trading Hub. For De La Salle Araneta University students.</p>
+                <p>&copy; <span id="auth-year">2026</span> DLSAU Trading Hub.</p>
             </footer>
         </div>
         </div>
@@ -187,7 +189,7 @@
                         <span class="badge hidden" id="notif-badge" role="status">0</span>
                     </button>
                     <button class="glass-btn primary-btn" id="sell-header-btn" onclick="openModal('upload-modal')">
-                        <i data-lucide="plus-circle"></i> <span class="hide-mobile">Sell Item</span>
+                        <i data-lucide="plus-circle"></i> <span class="hide-mobile">List an Item</span>
                     </button>
                     <div class="user-profile" onclick="openModal('profile-modal')">
                         <div class="avatar" id="user-avatar">JG</div>
@@ -412,7 +414,7 @@
             </button>
             <button class="mobile-nav-item" onclick="openModal('upload-modal')">
                 <i data-lucide="plus-circle"></i>
-                <span>Sell</span>
+                <span>List</span>
             </button>
             <button class="mobile-nav-item" onclick="openModal('profile-modal')">
                 <i data-lucide="user"></i>
@@ -486,8 +488,8 @@
                     <p class="step-hint">Mention the condition, size or anything a buyer should know.</p>
                     <div class="input-group">
                         <label for="prod-desc">Description <span class="required-mark" aria-hidden="true">*</span></label>
-                        <textarea id="prod-desc" rows="4" maxlength="400" placeholder="Describe your item..." required></textarea>
-                        <p class="input-hint"><span id="prod-desc-count">0</span>/400</p>
+                        <textarea id="prod-desc" rows="2" maxlength="100" placeholder="Short description (max 100 characters)" required></textarea>
+                        <p class="input-hint"><span id="prod-desc-count">0</span>/100</p>
                     </div>
                 </section>
 
@@ -625,8 +627,8 @@
                 </div>
                 <div class="input-group">
                     <label for="edit-desc">Description <span class="required-mark" aria-hidden="true">*</span></label>
-                    <textarea id="edit-desc" rows="4" maxlength="400" required></textarea>
-                    <p class="input-hint"><span id="edit-desc-count">0</span>/400</p>
+                    <textarea id="edit-desc" rows="2" maxlength="100" required></textarea>
+                    <p class="input-hint"><span id="edit-desc-count">0</span>/100</p>
                 </div>
                 <div class="input-group">
                     <label for="edit-file">Photo</label>
@@ -670,6 +672,28 @@
                     <button type="button" class="glass-btn" onclick="closeLegal()">Cancel</button>
                     <button type="button" class="glass-btn primary-btn" id="legal-accept-btn" onclick="acceptLegalAndRegister()" disabled>Agree &amp; create account</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP - Help -->
+    <div class="modal-overlay above-auth hidden" id="help-modal">
+        <div class="glass-card modal-card legal-card">
+            <div class="modal-header">
+                <h3>Help</h3>
+                <button class="close-btn" aria-label="Close dialog" onclick="closeModal('help-modal')">&times;</button>
+            </div>
+            <div class="legal-body" tabindex="0">
+                <h4>Creating an account</h4>
+                <p>Sign up with your DLSAU details, then save the recovery code shown once after registering. You will need it to reset your password.</p>
+                <h4>Forgot your password?</h4>
+                <p>Use the "Forgot password" option on the login page and enter your recovery code.</p>
+                <h4>Buying and selling</h4>
+                <p>Browse the marketplace, message sellers in chat, and post your own items. New listings are reviewed by an admin before they appear.</p>
+                <h4>Safety</h4>
+                <p>Meet on campus, and report suspicious users from the chat. Admins review all reports.</p>
+                <h4>Still stuck?</h4>
+                <p>Contact the DLSAU Trading Hub admins through the university.</p>
             </div>
         </div>
     </div>
@@ -735,6 +759,46 @@
         </div>
     </div>
 
+    <!-- POPUP - Suspend / delete account (admin) -->
+    <div class="modal-overlay hidden" id="account-action-modal">
+        <div class="glass-card modal-card">
+            <div class="modal-header">
+                <h3 id="account-action-title">Suspend account</h3>
+                <button class="close-btn" aria-label="Close dialog" onclick="closeModal('account-action-modal')">&times;</button>
+            </div>
+            <form novalidate id="account-action-form" onsubmit="handleAccountAction(event)">
+                <p class="step-hint" id="account-action-text"></p>
+                <div class="input-group">
+                    <label for="account-action-reason">Reason <span class="required-mark" aria-hidden="true">*</span> <span class="optional">(shown to the user)</span></label>
+                    <textarea id="account-action-reason" rows="3" maxlength="300" required placeholder="Explain why this is being done."></textarea>
+                </div>
+                <div class="wizard-actions">
+                    <button type="button" class="glass-btn" onclick="closeModal('account-action-modal')">Cancel</button>
+                    <button type="submit" class="glass-btn danger-btn" id="account-action-btn">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Restricted account screen (suspended / deleted members) -->
+    <div class="restricted-overlay hidden" id="restricted-overlay">
+        <div class="glass-card restricted-card">
+            <i data-lucide="shield-alert" aria-hidden="true"></i>
+            <h2 id="restricted-title">Your account has been suspended</h2>
+            <p class="text-muted">Reason from the admin:</p>
+            <blockquote id="restricted-reason"></blockquote>
+            <h4>Think this is a mistake? Contact the admin</h4>
+            <form novalidate id="restricted-form" onsubmit="handleAppeal(event)">
+                <div class="input-group">
+                    <textarea id="appeal-message" rows="3" maxlength="400" placeholder="Explain why you think this is wrong..." aria-label="Message to the admin"></textarea>
+                </div>
+                <button type="submit" class="glass-btn primary-btn full-width">Contact admin</button>
+            </form>
+            <p class="restricted-sent hidden" id="restricted-sent">Your message was sent. An admin will review it.</p>
+            <button type="button" class="glass-btn full-width" onclick="performLogout()">Log out</button>
+        </div>
+    </div>
+
     <!-- POPUP - Reject listing (admin) -->
     <div class="modal-overlay hidden" id="reject-modal">
         <div class="glass-card modal-card">
@@ -745,8 +809,8 @@
             <form novalidate id="reject-form" onsubmit="handleRejectListing(event)">
                 <p class="step-hint" id="reject-target-text"></p>
                 <div class="input-group">
-                    <label for="reject-reason">Reason <span class="optional">(shown to the seller)</span></label>
-                    <textarea id="reject-reason" rows="3" maxlength="300" placeholder="e.g. The photo does not show the item."></textarea>
+                    <label for="reject-reason">Note to the seller <span class="required-mark" aria-hidden="true">*</span></label>
+                    <textarea id="reject-reason" rows="3" maxlength="300" required placeholder="e.g. The photo does not show the item."></textarea>
                 </div>
                 <div class="wizard-actions">
                     <button type="button" class="glass-btn" onclick="closeModal('reject-modal')">Cancel</button>

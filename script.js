@@ -122,7 +122,7 @@ const MESSAGES = {
         regName: 'Username is required.',
         regNameInvalid: 'Use 3-20 letters, numbers, dots or underscores (no spaces).',
         regEmailEmpty: 'Email is required.',
-        regEmailInvalid: 'Enter a valid email address.',
+        regEmailInvalid: 'Use your DLSAU email address, for example name@dlsau.edu.ph.',
         regEmailTaken: 'An account with this email already exists. Try logging in.',
         regNameTaken: 'This username is already taken. Please choose another.',
         regPasswordEmpty: 'Password is required.',
@@ -163,6 +163,14 @@ const STORAGE_KEYS = {
 };
 
 // Database rows use snake_case, the rest of the app uses camelCase
+const postedLabel = iso => {
+    if (!iso) return '';
+    const days = Math.floor((Date.now() - new Date(iso)) / 864e5);
+    const when = days < 1 ? 'Today' : days === 1 ? 'Yesterday' : days < 7 ? `${days} days ago` : new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+    return `Posted ${when}`;
+};
+const postedHTML = prod => prod.createdAt ? `<div class="card-date" title="${new Date(prod.createdAt).toLocaleString()}"><i data-lucide="calendar"></i> ${postedLabel(prod.createdAt)}</div>` : '';
+
 const rowToProduct = r => ({
     id: r.id,
     title: r.title,
@@ -183,6 +191,8 @@ const rowToAccount = r => ({
     passHash: r.pass_hash,
     recoveryHash: r.recovery_hash,
     suspended: !!r.suspended,
+    deleted: !!r.deleted,
+    statusReason: r.status_reason || '',
     createdAt: r.created_at
 });
 
@@ -336,7 +346,7 @@ function subscribeToRealtime() {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'chats' }, () => loadChats())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'ratings' }, () => loadRatings())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => loadNotifications())
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'accounts' }, () => loadAdminData())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'accounts' }, () => { loadAdminData(); checkOwnAccountStatus(); })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, () => loadAdminData())
         .subscribe(status => {
             if (status === 'CHANNEL_ERROR') {
@@ -484,7 +494,7 @@ async function startDataListeners() {
     startTopProgress();
     subscribeToRealtime();
     try {
-        await Promise.all([loadProducts(), loadChats(), loadRatings(), loadNotifications(), loadAdminData()]);
+        await Promise.all([loadProducts(), loadChats(), loadRatings(), loadNotifications(), loadAdminData(), checkOwnAccountStatus(true)]);
     } finally {
         finishTopProgress();
     }
@@ -739,12 +749,6 @@ async function handleLogin(e) {
 
     if (account) {
         const hash = await hashPassword(pass, account.email);
-        if (hash === account.passHash && account.suspended) {
-            setButtonLoading(btn, false);
-            failForm(form, 'login-email', MESSAGES.accountSuspended);
-            showToast(MESSAGES.accountSuspended, 'error');
-            return;
-        }
         if (hash === account.passHash) {
             user = { name: account.name, email: account.email, role: 'Member', initials: initialsOf(account.name) };
         }
@@ -776,7 +780,7 @@ async function handleRegister(e) {
 
     if (!validateForm(form, [
         ['reg-name', v => !v ? MESSAGES.val.regName : /^[A-Za-z0-9._]{3,20}$/.test(v) ? '' : MESSAGES.val.regNameInvalid],
-        ['reg-email', v => !v ? MESSAGES.val.regEmailEmpty : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? '' : MESSAGES.val.regEmailInvalid],
+        ['reg-email', v => !v ? MESSAGES.val.regEmailEmpty : /^[^\s@]+@dlsau\.edu\.ph$/i.test(v) ? '' : MESSAGES.val.regEmailInvalid],
         ['reg-password', v => !v ? MESSAGES.val.regPasswordEmpty : v.length < 6 ? MESSAGES.val.regPasswordShort : '']
     ])) return;
 
@@ -928,6 +932,66 @@ async function handleLogout() {
         icon: 'logout'
     });
     if (!ok) return;
+    performLogout();
+}
+
+// Suspended / deleted members see a restricted screen with the reason and a way to contact the admin.
+// If it happens while they are signed in the notice appears right away and stays until restored or logged out.
+let accountRestriction = null;
+
+async function checkOwnAccountStatus(initial = false) {
+    if (!currentUser || currentUser.role === 'Admin') return;
+    const { data, error } = await db.from('accounts').select('*').ilike('email', currentUser.email).limit(1);
+    if (error) return;
+    const acc = data && data[0];
+    const restriction = !acc ? { type: 'deleted', reason: '' }
+        : acc.deleted ? { type: 'deleted', reason: acc.status_reason || '' }
+        : acc.suspended ? { type: 'suspended', reason: acc.status_reason || '' } : null;
+    if (!restriction) {
+        if (accountRestriction) showToast('Your account has been restored.', 'success');
+        accountRestriction = null;
+        document.getElementById('restricted-overlay').classList.add('hidden');
+        return;
+    }
+    const changed = !accountRestriction || accountRestriction.type !== restriction.type || accountRestriction.reason !== restriction.reason;
+    accountRestriction = restriction;
+    if (changed) showRestricted();
+}
+
+function showRestricted() {
+    const { type, reason } = accountRestriction;
+    const el = document.getElementById('restricted-overlay');
+    document.getElementById('restricted-title').textContent = type === 'deleted' ? 'Your account has been deleted' : 'Your account has been suspended';
+    document.getElementById('restricted-reason').textContent = reason || 'No reason was provided.';
+    document.getElementById('restricted-form').reset();
+    document.getElementById('restricted-sent').classList.add('hidden');
+    document.getElementById('restricted-form').classList.remove('hidden');
+    el.classList.remove('hidden');
+    lucide.createIcons();
+}
+
+async function handleAppeal(e) {
+    e.preventDefault();
+    const form = e.target;
+    if (!validateForm(form, [['appeal-message', v => v ? '' : 'Write a short message to the admin.']])) return;
+    const btn = form.querySelector('button[type="submit"]');
+    setButtonLoading(btn, true, MESSAGES.loading.sending);
+    const { error } = await db.from('reports').insert({
+        reporter: currentUser.name,
+        reported_user: currentUser.name,
+        reason: 'Account appeal',
+        details: `[${accountRestriction ? accountRestriction.type : 'restricted'}] ${document.getElementById('appeal-message').value.trim()}`,
+        transcript: []
+    });
+    setButtonLoading(btn, false);
+    if (error) { showToast(MESSAGES.saveFailed(error.message), 'error'); return; }
+    form.classList.add('hidden');
+    document.getElementById('restricted-sent').classList.remove('hidden');
+}
+
+function performLogout() {
+    accountRestriction = null;
+    document.getElementById('restricted-overlay').classList.add('hidden');
     currentUser = null;
     wishlist = [];
     activeChatId = null;
@@ -1449,6 +1513,7 @@ function renderProducts() {
                 </div>
                 <div class="card-title">${escapeHTML(prod.title)}</div>
                 <div class="card-desc">${escapeHTML(prod.desc || '')}</div>
+                ${postedHTML(prod)}
                 ${prod.approval === 'rejected' && prod.rejectReason ? `<div class="reject-note">Reason: ${escapeHTML(prod.rejectReason)}. Edit the listing to resubmit it.</div>` : ''}
                 <div class="card-owner" onclick="openSellerProfile('${prod.owner}')">
                     <i data-lucide="user" style="width: 12px; height: 12px;"></i>
@@ -1541,6 +1606,7 @@ function renderWishlist() {
                 </div>
                 <div class="card-title">${escapeHTML(prod.title)}</div>
                 <div class="card-desc">${escapeHTML(prod.desc || '')}</div>
+                ${postedHTML(prod)}
                 <div class="card-owner" onclick="openSellerProfile('${prod.owner}')">Seller: ${prod.owner}</div>
                 <div class="card-footer">
                     <button class="glass-btn primary-btn" onclick="buyItemAndStartChat('${prod.id}')">
@@ -1600,7 +1666,7 @@ function setEditPhotoPreview(src, title, note) {
 
 function openEditListing(productId) {
     const prod = products.find(p => p.id === productId);
-    if (!prod || !currentUser || (prod.owner !== currentUser.name && !isAdminUser())) {
+    if (!prod || !currentUser || prod.owner !== currentUser.name) {
         showToast(MESSAGES.cannotEditOthers, 'warning');
         return;
     }
@@ -1641,7 +1707,7 @@ async function handleEditProduct(e) {
     e.preventDefault();
     const form = e.target;
     const prod = products.find(p => p.id === editingProductId);
-    if (!prod || !currentUser || (prod.owner !== currentUser.name && !isAdminUser())) {
+    if (!prod || !currentUser || prod.owner !== currentUser.name) {
         showToast(MESSAGES.cannotEditOthers, 'warning');
         closeModal('edit-modal');
         return;
@@ -2440,6 +2506,7 @@ function listingPreviewHTML(msg) {
             <strong>${escapeHTML(prod.title)}</strong>
             <span>${escapeHTML(prod.category)} &middot; ${escapeHTML(prod.status || 'Available')}</span>
             <span>Seller: ${escapeHTML(prod.owner)}</span>
+            ${prod.createdAt ? `<span>${postedLabel(prod.createdAt)}</span>` : ''}
         </div>
     </div>`;
 }
@@ -2638,15 +2705,15 @@ function closeModal(id) {
 }
 // ==========================================================
 // 12. TEAM - developers popup (opens from the leaf logo)
-//     Add or remove names here. The list is sorted A-Z by first name automatically.
+//     Add or remove names here. The list is written as "Last, First" and sorted A-Z automatically.
 // ==========================================================
 const TEAM = [
-    'Carlos Alcantara',
-    'Justine Garma',
-    'Cyril Rodriguez',
-    'Jose Gabo',
-    'Justin Encarnado',
-    'Kyler Santos'
+    'Alcantara, Carlos',
+    'Garma, Justine',
+    'Rodriguez, Cyril',
+    'Gabo, Jose',
+    'Encarnado, Justin',
+    'Santos, Kyler'
 ];
 
 function renderTeam() {
@@ -2808,8 +2875,7 @@ function renderAdmin() {
 
     if (panel.dataset.tab !== adminTab) {
         panel.dataset.tab = adminTab;
-        const search = adminTab === 'listings' || adminTab === 'accounts'
-            ? `<input type="search" class="glass-input admin-search" id="admin-search" placeholder="Search ${adminTab}..." value="${escapeHTML(adminSearch)}" oninput="adminSearch = this.value.toLowerCase().trim(); renderAdminBody()">` : '';
+        const search = `<div class="admin-search-wrap"><i data-lucide="search"></i><input type="search" class="glass-input admin-search" id="admin-search" placeholder="Search ${adminTab === 'pending' ? 'pending listings' : adminTab}..." aria-label="Search ${adminTab}" value="${escapeHTML(adminSearch)}" oninput="adminSearch = this.value.toLowerCase().trim(); renderAdminBody()"></div>`;
         const filter = adminTab === 'listings'
             ? `<select class="glass-input select-field admin-filter" onchange="adminFilter = this.value; renderAdminBody()">
                 ${['all', 'pending', 'approved', 'rejected'].map(v => `<option value="${v}" ${adminFilter === v ? 'selected' : ''}>${v === 'all' ? 'All statuses' : v[0].toUpperCase() + v.slice(1)}</option>`).join('')}
@@ -2829,7 +2895,7 @@ function renderAdminBody() {
     const empty = text => `<p class="admin-empty">${text}</p>`;
 
     if (adminTab === 'pending') {
-        const list = products.filter(p => p.approval === 'pending').reverse();
+        const list = products.filter(p => p.approval === 'pending' && (!adminSearch || p.title.toLowerCase().includes(adminSearch) || p.owner.toLowerCase().includes(adminSearch) || p.category.toLowerCase().includes(adminSearch))).reverse();
         body.innerHTML = list.length ? `<div class="admin-review-list">${list.map(p => `
             <article class="admin-review" data-id="${p.id}">
                 <img src="${p.img}" alt="${escapeHTML(p.title)}">
@@ -2840,10 +2906,9 @@ function renderAdminBody() {
                     <div class="admin-actions">
                         <button class="glass-btn primary-btn" onclick="approveProduct('${p.id}')"><i data-lucide="check"></i> Approve</button>
                         <button class="glass-btn danger-btn" onclick="openRejectModal('${p.id}')"><i data-lucide="x"></i> Reject</button>
-                        <button class="glass-btn" onclick="openEditListing('${p.id}')"><i data-lucide="pencil"></i> Edit</button>
                     </div>
                 </div>
-            </article>`).join('')}</div>` : empty('No listings are waiting for review.');
+            </article>`).join('')}</div>` : empty(adminSearch ? 'No pending listings match.' : 'No listings are waiting for review.');
     } else if (adminTab === 'listings') {
         const list = products.filter(p =>
             (adminFilter === 'all' || p.approval === adminFilter) &&
@@ -2861,7 +2926,6 @@ function renderAdminBody() {
                     <td><div class="admin-actions">
                         ${p.approval !== 'approved' ? `<button class="glass-btn" onclick="approveProduct('${p.id}')" title="Approve"><i data-lucide="check"></i></button>` : ''}
                         ${p.approval !== 'rejected' ? `<button class="glass-btn" onclick="openRejectModal('${p.id}')" title="Reject"><i data-lucide="x"></i></button>` : ''}
-                        <button class="glass-btn" onclick="openEditListing('${p.id}')" title="Edit"><i data-lucide="pencil"></i></button>
                         <button class="glass-btn danger-btn" onclick="deleteProduct('${p.id}')" title="Delete"><i data-lucide="trash"></i></button>
                     </div></td>
                 </tr>`).join('')}</tbody></table></div>` : empty('No listings match.');
@@ -2875,20 +2939,20 @@ function renderAdminBody() {
                     <td>${escapeHTML(a.email)}</td>
                     <td>${products.filter(p => p.owner === a.name).length}</td>
                     <td>${fmtDate(a.createdAt)}</td>
-                    <td>${a.suspended ? '<span class="pill rejected">Suspended</span>' : '<span class="pill approved">Active</span>'}</td>
+                    <td>${a.deleted ? `<span class="pill rejected" title="${escapeHTML(a.statusReason)}">Deleted</span>` : a.suspended ? `<span class="pill rejected" title="${escapeHTML(a.statusReason)}">Suspended</span>` : '<span class="pill approved">Active</span>'}</td>
                     <td><div class="admin-actions">
-                        <button class="glass-btn" onclick="openAccountEdit('${a.id}')" title="Edit"><i data-lucide="pencil"></i></button>
-                        <button class="glass-btn" onclick="toggleSuspendAccount('${a.id}')" title="${a.suspended ? 'Unsuspend' : 'Suspend'}"><i data-lucide="${a.suspended ? 'user-check' : 'user-x'}"></i></button>
-                        <button class="glass-btn danger-btn" onclick="deleteAccount('${a.id}')" title="Delete"><i data-lucide="trash"></i></button>
+                        ${a.deleted ? `<button class="glass-btn" onclick="restoreAccount('${a.id}')" title="Restore"><i data-lucide="user-check"></i></button>` : `<button class="glass-btn" onclick="toggleSuspendAccount('${a.id}')" title="${a.suspended ? 'Unsuspend' : 'Suspend'}"><i data-lucide="${a.suspended ? 'user-check' : 'user-x'}"></i></button>
+                        <button class="glass-btn danger-btn" onclick="deleteAccount('${a.id}')" title="Delete"><i data-lucide="trash"></i></button>`}
                     </div></td>
                 </tr>`).join('')}</tbody></table></div>` : empty('No accounts found.');
     } else {
-        body.innerHTML = adminReports.length ? `<div class="admin-review-list">${adminReports.map(r => {
+        const reports = adminReports.filter(r => !adminSearch || [r.reporter, r.reportedUser, r.reason, r.itemTitle, r.details, r.status].some(v => (v || '').toLowerCase().includes(adminSearch)));
+        body.innerHTML = reports.length ? `<div class="admin-review-list">${reports.map(r => {
             const target = adminAccounts.find(a => a.name === r.reportedUser);
             return `
             <article class="admin-report ${r.status}" data-id="${r.id}">
                 <div class="admin-report-head">
-                    <strong>${escapeHTML(r.reporter)} reported ${escapeHTML(r.reportedUser)}</strong>
+                    <strong>${r.reason === 'Account appeal' ? `${escapeHTML(r.reporter)} sent an appeal` : `${escapeHTML(r.reporter)} reported ${escapeHTML(r.reportedUser)}`}</strong>
                     <span class="pill ${r.status === 'open' ? 'pending' : 'approved'}">${escapeHTML(r.status)}</span>
                 </div>
                 <p class="text-muted">${escapeHTML(r.reason)}${r.itemTitle ? ` &middot; item: ${escapeHTML(r.itemTitle)}` : ''} &middot; ${fmtDate(r.createdAt)}</p>
@@ -2899,10 +2963,10 @@ function renderAdminBody() {
                         ? `<button class="glass-btn primary-btn" onclick="setReportStatus('${r.id}', 'resolved')">Mark resolved</button>
                            <button class="glass-btn" onclick="setReportStatus('${r.id}', 'dismissed')">Dismiss</button>`
                         : `<button class="glass-btn" onclick="setReportStatus('${r.id}', 'open')">Reopen</button>`}
-                    ${target ? `<button class="glass-btn danger-btn" onclick="toggleSuspendAccount('${target.id}')">${target.suspended ? 'Unsuspend user' : 'Suspend user'}</button>` : ''}
+                    ${target ? (target.deleted ? `<button class="glass-btn" onclick="restoreAccount('${target.id}')">Restore account</button>` : `<button class="glass-btn danger-btn" onclick="toggleSuspendAccount('${target.id}')">${target.suspended ? 'Unsuspend user' : 'Suspend user'}</button>`) : ''}
                 </div>
             </article>`;
-        }).join('')}</div>` : empty('No reports have been submitted.');
+        }).join('')}</div>` : empty(adminSearch ? 'No reports match.' : 'No reports have been submitted.');
     }
     lucide.createIcons();
 }
@@ -2943,11 +3007,12 @@ async function handleRejectListing(e) {
     const prod = products.find(p => p.id === rejectingProductId);
     if (!prod) return;
     const reason = document.getElementById('reject-reason').value.trim();
+    if (!reason) { showToast('Please leave a note explaining why this listing is rejected.', 'warning'); document.getElementById('reject-reason').focus(); return; }
     const { error } = await db.from('products').update({ approval: 'rejected', reject_reason: reason || null }).eq('id', prod.id);
     if (error) { showToast(MESSAGES.saveFailed(error.message), 'error'); return; }
     prod.approval = 'rejected';
     prod.rejectReason = reason;
-    notify(prod.owner, 'rejected', `Your listing "${prod.title}" was not approved.`, reason ? `Reason: ${reason}` : 'You can edit it and submit it again.');
+    notify(prod.owner, 'rejected', `Your listing "${prod.title}" was not approved.`, `Reason: ${reason}`);
     closeModal('reject-modal');
     showToast(MESSAGES.listingRejected(prod.title), 'info');
     await adminResolveListing(prod.id, 'admin-rejected');
@@ -2955,48 +3020,63 @@ async function handleRejectListing(e) {
 }
 
 // ----- accounts
+let accountAction = null;
+
 async function toggleSuspendAccount(id) {
     const acc = adminAccounts.find(a => a.id === id);
     if (!acc) return;
-    const suspended = !acc.suspended;
-    if (suspended) {
-        const ok = await confirmDialog({
-            title: `Suspend ${acc.name}?`,
-            message: 'They will no longer be able to sign in until you unsuspend the account.',
-            confirmText: 'Suspend', cancelText: MESSAGES.confirm.cancel, tone: 'warning', icon: 'warning'
-        });
-        if (!ok) return;
-    }
-    const { error } = await db.from('accounts').update({ suspended }).eq('id', id);
-    if (error) { showToast(MESSAGES.saveFailed(error.message), 'error'); return; }
-    acc.suspended = suspended;
-    showToast(MESSAGES.accountUpdated(acc.name), 'success');
-    renderAdmin();
-    flashEl(adminRow(id), suspended ? 'flash-bad' : 'flash-good');
-    adminReports.filter(r => r.reportedUser === acc.name).forEach(r => flashEl(adminRow(r.id), suspended ? 'flash-bad' : 'flash-good'));
+    if (!acc.suspended) { openAccountAction(id, 'suspend'); return; }
+    await restoreAccount(id);
 }
 
-async function deleteAccount(id) {
+function deleteAccount(id) { openAccountAction(id, 'delete'); }
+
+function openAccountAction(id, type) {
     const acc = adminAccounts.find(a => a.id === id);
     if (!acc) return;
-    const ok = await confirmDialog({
-        title: 'Permanently delete this account?',
-        message: `You are about to delete "${acc.name}" and all of their listings.`,
-        warnings: ['This cannot be undone.'],
-        requireText: acc.name,
-        confirmText: 'Delete account', cancelText: MESSAGES.confirm.cancel, tone: 'danger', icon: 'trash'
-    });
-    if (!ok) return;
-    await db.from('products').delete().eq('owner', acc.name);
-    const { error } = await db.from('accounts').delete().eq('id', id);
+    accountAction = { id, type };
+    const del = type === 'delete';
+    document.getElementById('account-action-form').reset();
+    document.getElementById('account-action-title').textContent = del ? 'Delete account' : 'Suspend account';
+    document.getElementById('account-action-text').textContent = del
+        ? `"${acc.name}" will be marked as deleted and all of their listings will be removed. They can still sign in, but will only see that the account is deleted, your reason, and a way to contact you.`
+        : `"${acc.name}" will be marked as suspended. They can still sign in, but will only see that the account is suspended, your reason, and a way to contact you.`;
+    document.getElementById('account-action-btn').textContent = del ? 'Delete account' : 'Suspend account';
+    openModal('account-action-modal');
+}
+
+async function handleAccountAction(e) {
+    e.preventDefault();
+    const acc = accountAction && adminAccounts.find(a => a.id === accountAction.id);
+    if (!acc) return;
+    const reason = document.getElementById('account-action-reason').value.trim();
+    if (!reason) { showToast('Please enter a reason.', 'warning'); document.getElementById('account-action-reason').focus(); return; }
+    const del = accountAction.type === 'delete';
+    const changes = del ? { deleted: true, suspended: false, status_reason: reason } : { suspended: true, deleted: false, status_reason: reason };
+    const { error } = await db.from('accounts').update(changes).eq('id', acc.id);
     if (error) { showToast(MESSAGES.saveFailed(error.message), 'error'); return; }
-    await animateOut([adminRow(id)], 'admin-removed');
-    adminAccounts = adminAccounts.filter(a => a.id !== id);
-    products = products.filter(p => p.owner !== acc.name);
-    showToast(MESSAGES.accountDeleted(acc.name), 'info');
+    if (del) {
+        await db.from('products').delete().eq('owner', acc.name);
+        products = products.filter(p => p.owner !== acc.name);
+        renderProducts();
+        renderWishlist();
+    }
+    Object.assign(acc, { suspended: !del, deleted: del, statusReason: reason });
+    closeModal('account-action-modal');
+    showToast(del ? MESSAGES.accountDeleted(acc.name) : MESSAGES.accountUpdated(acc.name), del ? 'info' : 'success');
     renderAdmin();
-    renderProducts();
-    renderWishlist();
+    flashEl(adminRow(acc.id), 'flash-bad');
+}
+
+async function restoreAccount(id) {
+    const acc = adminAccounts.find(a => a.id === id);
+    if (!acc) return;
+    const { error } = await db.from('accounts').update({ suspended: false, deleted: false, status_reason: null }).eq('id', id);
+    if (error) { showToast(MESSAGES.saveFailed(error.message), 'error'); return; }
+    Object.assign(acc, { suspended: false, deleted: false, statusReason: '' });
+    showToast(MESSAGES.accountUpdated(acc.name), 'success');
+    renderAdmin();
+    flashEl(adminRow(id), 'flash-good');
 }
 
 function openAccountEdit(id) {
@@ -3052,7 +3132,7 @@ async function handleEditAccount(e) {
 
     if (!validateForm(form, [
         ['acc-name', v => !v ? MESSAGES.val.regName : /^[A-Za-z0-9._]{3,20}$/.test(v) ? '' : MESSAGES.val.regNameInvalid],
-        ['acc-email', v => !v ? MESSAGES.val.regEmailEmpty : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? '' : MESSAGES.val.regEmailInvalid],
+        ['acc-email', v => !v ? MESSAGES.val.regEmailEmpty : /^[^\s@]+@dlsau\.edu\.ph$/i.test(v) ? '' : MESSAGES.val.regEmailInvalid],
         ['acc-password', v => (v || emailChanged) && v.length < 6 ? (emailChanged ? MESSAGES.val.accPasswordNeeded : MESSAGES.val.regPasswordShort) : '']
     ])) return;
 
@@ -3143,28 +3223,30 @@ document.addEventListener('focusin', e => {
 const LEGAL_UPDATED = 'Last updated: October 14, 2026';
 const LEGAL_DOCS = {
     terms: {
-        heading: 'Terms of Service',
+        heading: 'Terms of Service and Conditions',
         html: `
             <p class="legal-updated">${LEGAL_UPDATED}</p>
-            <p>Welcome to DLSAU Trading Hub, a student-to-student marketplace for De La Salle Araneta University. By creating an account or using the site you agree to these terms.</p>
+            <p>Welcome to DLSAU Trading Hub, a community marketplace for everyone inside De La Salle Araneta University, including students, faculty, professors, staff, guests and other members of the campus community. By creating an account or using the site you agree to these terms.</p>
             <h4>1. Who can use the Hub</h4>
-            <p>The Hub is for DLSAU students. You must give a real email address you control and keep your password private. You are responsible for everything done through your account.</p>
+            <p>The Hub is for members of the DLSAU community, including students, faculty, professors, staff and guests. You must give a real email address you control and keep your password private. You are responsible for everything done through your account.</p>
             <h4>2. Listings</h4>
             <ul>
                 <li>Post only items you own and are allowed to sell or trade, with honest photos and descriptions.</li>
                 <li>Every listing is reviewed by an admin before it is shown. Listings may be rejected, edited or removed if they break these terms.</li>
                 <li>Prohibited items include weapons, drugs, alcohol, vapes, stolen goods, counterfeit goods, exam papers and anything illegal or against school policy.</li>
             </ul>
-            <h4>3. Trading and meetups</h4>
-            <p>The Hub only connects students. We do not handle payments, delivery or disputes. Inspect items before paying, and meet in safe, public campus areas. Trades are agreements between you and the other student.</p>
+            <h4>3. Our role: a listing and chat platform only</h4>
+            <p>DLSAU Trading Hub is only a listing and chatting app. We provide a place to post items and message other members. We are not a party to any sale, trade or agreement, and we do not buy, sell, hold, inspect, deliver or guarantee any item. We do not handle payments, delivery, refunds, returns or disputes.</p>
+            <p>All transactions happen entirely between you and the other member, at your own risk. Inspect items before paying, and meet in safe, public campus areas.</p>
             <h4>4. Behavior</h4>
             <p>Be respectful. Harassment, spam, scams, impersonation and misleading other users are not allowed. You can report a user from any chat, and admins may review the reported conversation.</p>
             <h4>5. Ratings</h4>
             <p>Ratings and reviews must be honest and based on a real interaction. Abusive or fake reviews may be removed.</p>
             <h4>6. Suspension and removal</h4>
-            <p>Admins may suspend accounts or delete listings that break these terms or put other students at risk, with or without notice.</p>
-            <h4>7. No warranty</h4>
-            <p>The Hub is provided "as is" as a school project. We do not guarantee the quality, safety or legality of items, or the conduct of other users, and are not liable for losses from trades.</p>
+            <p>Admins may suspend accounts or delete listings that break these terms or put other members at risk, with or without notice.</p>
+            <h4>7. No liability for scams or transactions</h4>
+            <p>The Hub is provided "as is" and "as available". Although admins review listings and reports, we cannot verify every user or item. To the fullest extent permitted by law, DLSAU Trading Hub, its developers and administrators are <strong>not liable</strong> for any scam, fraud, misrepresentation, theft, loss, damage, injury or dispute arising from any listing, chat, meetup or transaction, whether or not it began on the Hub.</p>
+            <p>We do not guarantee the quality, safety, authenticity or legality of items, or the identity or conduct of other users. You are solely responsible for your decisions and transactions. If you suspect a scam, stop the transaction and report the user from the chat.</p>
             <h4>8. Changes</h4>
             <p>We may update these terms. Continuing to use the Hub after a change means you accept the new terms.</p>`
     },
@@ -3177,14 +3259,14 @@ const LEGAL_DOCS = {
             <ul>
                 <li><strong>Account:</strong> username, email address and a securely hashed version of your password and recovery code (never the plain text).</li>
                 <li><strong>Content you post:</strong> listings, photos, descriptions, wishlist activity, ratings and reviews.</li>
-                <li><strong>Messages:</strong> chats you send to other students, including read ("seen") status.</li>
+                <li><strong>Messages:</strong> chats you send to other members, including read ("seen") status.</li>
                 <li><strong>Reports and notifications:</strong> reports you file and the notices we send about your listings.</li>
             </ul>
             <h4>2. Why we use it</h4>
-            <p>To run your account, show approved listings, let students chat and rate each other, keep the community safe, and notify you about listing reviews and let you reset a forgotten password.</p>
+            <p>To run your account, show approved listings, let members chat and rate each other, keep the community safe, and notify you about listing reviews and let you reset a forgotten password.</p>
             <h4>3. Who can see it</h4>
             <ul>
-                <li>Your username, listings and ratings are visible to other signed-in students.</li>
+                <li>Your username, listings and ratings are visible to other signed-in members.</li>
                 <li>Your chats are visible to you and the other person. If a chat is reported, the admins can read the reported messages.</li>
                 <li>Your email is visible only to admins.</li>
                 <li>We do not sell your information or use it for advertising.</li>
@@ -3238,3 +3320,5 @@ function acceptLegalAndRegister() {
 }
 
 document.getElementById('auth-year').textContent = new Date().getFullYear();
+
+function openHelp() { openModal('help-modal'); }
