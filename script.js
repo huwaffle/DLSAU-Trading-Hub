@@ -629,6 +629,22 @@ function switchAuthTab(tab) {
     const animate = current && current !== next
         && !document.getElementById('auth-overlay').classList.contains('hidden')
         && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const shell = document.querySelector('.auth-shell');
+    const art = document.querySelector('.auth-art');
+    const swap = next === 'register';
+    if (shell.classList.contains('swapped') !== swap) {
+        const a0 = art.getBoundingClientRect(), c0 = card.getBoundingClientRect();
+        shell.classList.toggle('swapped', swap);
+        if (animate) {
+            const a1 = art.getBoundingClientRect(), c1 = card.getBoundingClientRect();
+            const slide = (el, from, to) => el.animate(
+                [{ transform: `translateX(${from.left - to.left}px)`, zIndex: 2 }, { transform: 'translateX(0)', zIndex: 2 }],
+                { duration: 700, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' });
+            slide(art, a0, a1);
+            slide(card, c0, c1);
+        }
+    }
     if (!animate) {
         showOnly(next);
         return;

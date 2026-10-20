@@ -1891,6 +1891,20 @@ body.kb-open .app-body { padding-bottom: 12px; }
    ========================================================== */
 .auth-shell { width: 100%; max-width: 980px; margin: auto; display: flex; align-items: center; justify-content: center; gap: 48px; }
 .auth-shell .auth-card { flex: none; width: 100%; max-width: 420px; margin: 0; }
+.auth-shell { position: relative; }
+.auth-shell.swapped { flex-direction: row-reverse; }
+.auth-welcome { margin: 18px 0 0; text-align: left; }
+.auth-welcome h1 { font-size: 30px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 6px; }
+.auth-welcome p { font-size: 14px; color: var(--text-muted); margin: 0; }
+.auth-card:not([data-view="register"]) .auth-welcome-register,
+.auth-card[data-view="register"] .auth-welcome-login,
+.auth-card[data-view="forgot"] .auth-welcome { display: none; }
+.auth-card[data-view="forgot"] .auth-tabs { margin-top: 0; }
+.auth-art { display: grid; }
+.art-view { grid-area: 1 / 1; align-self: center; transition: opacity 600ms var(--ease) 100ms, transform 700ms var(--ease), visibility 0s linear 0s; }
+.art-register, .auth-shell.swapped .art-login { opacity: 0; visibility: hidden; pointer-events: none; transform: translateX(-16px); transition-delay: 0s, 0s, 700ms; transition-duration: 450ms, 700ms, 0s; }
+.auth-shell.swapped .art-login { transform: translateX(16px); }
+.auth-shell.swapped .art-register { opacity: 1; visibility: visible; pointer-events: auto; transform: none; }
 .auth-art { flex: 1; min-width: 0; max-width: 480px; animation: rise 500ms var(--ease) both; }
 .auth-art h2 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.1; margin-bottom: 12px; }
 .auth-art h2 em { font-family: var(--font-accent); font-weight: 400; font-style: italic; color: var(--primary-green); }

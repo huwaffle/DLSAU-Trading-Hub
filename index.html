@@ -17,7 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
     <div class="top-progress hidden" id="top-progress" role="progressbar" aria-label="Loading"><span id="top-progress-fill"></span></div>
@@ -30,6 +30,7 @@
     <div class="auth-overlay" id="auth-overlay">
         <div class="auth-shell">
             <aside class="auth-art" aria-label="Welcome">
+              <div class="art-view art-login">
                 <h2>Trade, swap &amp; <em>share</em> with your campus family.</h2>
                 <p class="auth-art-sub">Join fellow DLSAU students buying, selling and trading the things they no longer need. It takes less than a minute to get started.</p>
                 <svg class="auth-illustration" viewBox="0 0 420 300" role="img" aria-label="Two students happily trading items at a campus stall">
@@ -68,6 +69,44 @@
                     <li><i data-lucide="message-square" aria-hidden="true"></i> Chat directly with sellers on campus</li>
                     <li><i data-lucide="star" aria-hidden="true"></i> Trade with rated, verified students</li>
                 </ul>
+              </div>
+              <div class="art-view art-register">
+                <h2>Your campus marketplace <em>starts</em> here.</h2>
+                <p class="auth-art-sub">Set up your free profile, list your first item and connect with students who are looking for exactly what you have.</p>
+                <svg class="auth-illustration" viewBox="0 0 420 300" role="img" aria-label="A student building a profile and listing a first item on a phone">
+                    <ellipse cx="210" cy="276" rx="150" ry="14" fill="#0A7A4B" opacity="0.12"/>
+                    <circle cx="80" cy="80" r="46" fill="#7DDBA8"/>
+                    <circle cx="350" cy="214" r="30" fill="#C6F432"/>
+                    <rect x="330" y="60" width="36" height="36" rx="9" fill="#FFB300" transform="rotate(14 348 78)"/>
+                    <!-- phone -->
+                    <rect x="130" y="24" width="160" height="250" rx="22" fill="#FFFFFF" stroke="#0F2418" stroke-width="3"/>
+                    <rect x="188" y="34" width="44" height="6" rx="3" fill="#0F2418" opacity="0.25"/>
+                    <!-- profile -->
+                    <circle cx="210" cy="86" r="22" fill="#FFD9B3" stroke="#0F2418" stroke-width="3"/>
+                    <path d="M190 82 a20 20 0 0 1 40 0 v-4 a20 20 0 0 0 -40 0 Z" fill="#6D28D9"/>
+                    <path d="M200 92 q10 8 20 0" fill="none" stroke="#0F2418" stroke-width="3" stroke-linecap="round"/>
+                    <rect x="170" y="120" width="80" height="8" rx="4" fill="#0F2418" opacity="0.75"/>
+                    <rect x="184" y="134" width="52" height="6" rx="3" fill="#0F2418" opacity="0.25"/>
+                    <!-- form rows -->
+                    <rect x="150" y="156" width="120" height="22" rx="8" fill="#E3F0E7" stroke="#0F2418" stroke-width="2"/>
+                    <rect x="150" y="186" width="120" height="22" rx="8" fill="#E3F0E7" stroke="#0F2418" stroke-width="2"/>
+                    <rect x="158" y="164" width="50" height="6" rx="3" fill="#0A7A4B"/>
+                    <rect x="158" y="194" width="70" height="6" rx="3" fill="#0A7A4B"/>
+                    <rect x="150" y="224" width="120" height="30" rx="15" fill="#0A7A4B" stroke="#0F2418" stroke-width="3"/>
+                    <path d="M192 239 l8 8 16 -16" fill="none" stroke="#C6F432" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <!-- floating listing card -->
+                    <rect x="274" y="130" width="96" height="70" rx="12" fill="#FFFFFF" stroke="#0F2418" stroke-width="3"/>
+                    <rect x="284" y="140" width="76" height="32" rx="6" fill="#1D4ED8"/>
+                    <rect x="284" y="180" width="46" height="6" rx="3" fill="#0F2418" opacity="0.7"/>
+                    <rect x="284" y="190" width="28" height="5" rx="2.5" fill="#BE185D"/>
+                    <path d="M80 150 l6 13 14 2 -10 9 3 14 -13 -7 -13 7 3 -14 -10 -9 14 -2 Z" fill="#FFB300" stroke="#0F2418" stroke-width="2.5" stroke-linejoin="round"/>
+                </svg>
+                <ul class="auth-art-points">
+                    <li><i data-lucide="user-plus" aria-hidden="true"></i> Free to join, no hidden fees</li>
+                    <li><i data-lucide="package-plus" aria-hidden="true"></i> List your first item in minutes</li>
+                    <li><i data-lucide="lock" aria-hidden="true"></i> Your password is stored securely</li>
+                </ul>
+              </div>
             </aside>
 
         <div class="glass-card auth-card" data-view="login">
@@ -76,6 +115,13 @@
                 <span>DLSAU Trading Hub</span>
             </div>
             
+            <div class="auth-welcome">
+                <h1 class="auth-welcome-login">Welcome back</h1>
+                <h1 class="auth-welcome-register">Hello there, newcomer!</h1>
+                <p class="auth-welcome-login">Good to see you again. Sign in to pick up where you left off.</p>
+                <p class="auth-welcome-register">Create your account and start trading with your campus family.</p>
+            </div>
+
             <div class="auth-tabs" id="auth-tabs-container">
                 <button class="tab-btn active" onclick="switchAuthTab('login')">Login</button>
                 <button class="tab-btn" onclick="switchAuthTab('register')">Create Account</button>
