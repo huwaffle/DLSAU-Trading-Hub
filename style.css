@@ -2010,3 +2010,36 @@ table { max-width: 100%; }
     .item-count { font-size: 12px; }
     .chat-header { padding: 10px 12px; }
 }
+
+
+/* Admin dashboard: interaction animations + search */
+.admin-search-wrap { position: relative; flex: 1; min-width: 180px; }
+.admin-search-wrap svg { position: absolute; left: 12px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; transition: color .2s, transform .2s; }
+.admin-search-wrap .admin-search { width: 100%; padding-left: 36px; transition: box-shadow .25s, transform .25s; }
+.admin-search-wrap:focus-within svg { color: var(--primary-green); transform: translateY(-50%) scale(1.15); }
+.admin-search-wrap .admin-search:focus { transform: translateY(-1px); }
+@keyframes adminIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes adminPop { 0% { transform: scale(1); } 50% { transform: scale(.94); } 100% { transform: scale(1); } }
+#tab-admin-view:not(.hidden) .admin-stat { animation: adminIn .45s ease backwards; }
+#tab-admin-view:not(.hidden) .admin-stat:nth-child(2) { animation-delay: .08s; }
+#tab-admin-view:not(.hidden) .admin-stat:nth-child(3) { animation-delay: .16s; }
+.admin-panel #admin-body > * { animation: adminIn .35s ease backwards; }
+.admin-review, .admin-report { transition: transform .2s, box-shadow .2s, border-color .2s; }
+.admin-review:hover, .admin-report:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.admin-table tbody tr { transition: background-color .2s; animation: adminIn .3s ease backwards; }
+.admin-table tbody tr:hover { background-color: var(--surface); }
+.admin-tab { transition: transform .2s, background-color .2s, color .2s, box-shadow .2s; }
+.admin-tab:hover { transform: translateY(-2px); }
+.admin-tab:active, .admin-actions .glass-btn:active, .admin-stat:active { animation: adminPop .25s ease; }
+.admin-actions .glass-btn { transition: transform .15s, box-shadow .2s, background-color .2s; }
+.admin-actions .glass-btn:hover { transform: translateY(-2px) scale(1.05); }
+.admin-actions .glass-btn svg { transition: transform .25s; }
+.admin-actions .glass-btn:hover svg { transform: rotate(-8deg) scale(1.15); }
+.admin-thumb { transition: transform .25s; }
+.admin-thumb:hover { transform: scale(1.6); position: relative; z-index: 2; }
+@media (prefers-reduced-motion: reduce) {
+    #tab-admin-view *, .admin-search-wrap * { animation: none !important; transition: none !important; }
+}
+
+.card-date { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-muted); margin: 2px 0 4px; }
+.card-date svg { width: 12px; height: 12px; }
