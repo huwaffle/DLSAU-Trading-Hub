@@ -29,16 +29,9 @@ The DLSAU Trading Hub is a web-based marketplace that allows DLSAU students to t
 
 ## 👨‍💻 Developers 
 
-This project was built by a group of DLSAU students who wanted to make trading on campus easier: 
+This project was built by:
 
-| Name | Role |
-| --- | --- |
-| Carlos Alcantara | Developer |
-| Justine Garma | Developer |
-| Cyril Rodriguez | Developer |
-| Jose Gabo | Developer |
-| Justin Encarnado | Developer |
-| Kyler Santos | Developer |
+Carlos Alcantara  & Justin Garma
 
 *You can see the full team list by clicking the leaf logo in the top bar of the app!*
 
