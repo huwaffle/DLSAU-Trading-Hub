@@ -6,7 +6,7 @@ A simple, friendly campus marketplace where DLSAU students can buy, sell, swap, 
 
 The **DLSAU Trading Hub** is a web-based platform that lets students pass on things they no longer need to classmates who might want them. Think of it as a campus garage sale that never closes! 
 
-## Eye-Catching Features
+## Features
 
 - **Quick Listings** – Post items in just a few clicks with photos & descriptions
 - **Search & Categories** – Find school supplies, gadgets, clothes, and more with ease
@@ -21,7 +21,11 @@ The **DLSAU Trading Hub** is a web-based platform that lets students pass on thi
 2. **Run it** – Open `index.html` in your browser, or use VS Code's Live Server
 3. **Start Trading** – Sign up and you're good to go! 
 
-*The app is already connected to its database, so no extra setup needed to try it out.* 
+*The app is already connected to its database, so no extra setup needed to try it out.*
+
+## Admin Account
+- **User** – admin
+- **Password** – admin
 
 ## Developers
 
